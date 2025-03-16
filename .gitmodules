@@ -7,3 +7,6 @@
 [submodule "frontier"]
 	path = frontier
 	url = ./frontier/
+[submodule "threading"]
+	path = threading
+	url = ./threading/

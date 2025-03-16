@@ -10,6 +10,8 @@
 
 #include "frontier/frontier.h"
 
+#include "threading/ThreadPool.h"
+
 // ! WE MUST FULLY PORT TO OUR STRING AND VECTOR CLASS
 // ! SOME OF THESE IMPORTS ARE INCLUDING THEM
 
@@ -38,7 +40,7 @@ struct crawlerResults {
 ThreadSafeFrontier frontier(NUM_OBJECTS, ERROR_RATE);
 ThreadSafeQueue<crawlerResults> crawlResultsQueue;
 
-void* crawlUrl(void *arg) {
+void crawlUrl(void *arg) {
     // crawlArg *cArg = (crawlArg *) arg;
     // char *buffer = cArg->buffer;
     // size_t pageSize = cArg->pageSize;
@@ -66,7 +68,7 @@ struct parserArg {
     size_t pageSize;
 };
 
-void *parseFunc(void *arg) {
+void parseFunc(void *arg) {
     // parserArg* pArg = (parserArg *) arg;
 
     // (void) arg;
@@ -102,38 +104,48 @@ int main() {
     crawl_threads.reserve(NUM_PARSER_THREADS);
 
 
+    ThreadPool threadPool(NUM_CRAWL_THREADS);
 
     
-
+    
+    
     std::string url = "https://www.google.com";
-    char buffer[MAX_PAGE_SIZE]; //don't use a buffer! write to a mapped file or other data structure
-    size_t pageSize;
-    ParsedUrl purl(url);
-
-
+    // char buffer[MAX_PAGE_SIZE]; //don't use a buffer! write to a mapped file or other data structure
+    // size_t pageSize;
+    // ParsedUrl purl(url);
+    
     frontier.insert(url);
-
+    
+    
+    // will run crawlURL and parseFunc 10 times each
+    // will probably want to have them in a different thread pool
+    for (size_t i = 0; i < 10; i++)
+    {
+        threadPool.submit(crawlUrl, (void*) nullptr);
+        threadPool.submit(parseFunc, (void*) nullptr);
+    }
+    
 
     for (size_t i = 0; i < NUM_CRAWL_THREADS; i++)
     {
-        const int rc = pthread_create( &crawl_threads[i], NULL, crawlUrl, (void*) nullptr);
+        // const int rc = pthread_create( &crawl_threads[i], NULL, crawlUrl, (void*) nullptr);
     }
 
     for (size_t i = 0; i < NUM_PARSER_THREADS; i++)
     {
-        const int rc = pthread_create( &parse_threads[i], NULL, parseFunc, (void*) nullptr);
+        // const int rc = pthread_create( &parse_threads[i], NULL, parseFunc, (void*) nullptr);
     }
     
 
 
     for (size_t i = 0; i < crawl_threads.size(); i++)
     {
-        pthread_join( crawl_threads[i], NULL );
+        // pthread_join( crawl_threads[i], NULL );
     }
     
     for (size_t i = 0; i < parse_threads.size(); i++)
     {
-        pthread_join( parse_threads[i], NULL );
+        // pthread_join( parse_threads[i], NULL );
     }
     return 0;
 }
