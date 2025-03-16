@@ -279,6 +279,11 @@ template<typename T>
             return arr + vecSize;
          }
 
+      T* data()
+         {
+            return arr;
+         }
+
    private:
       void reset() {
          delete[] arr;
