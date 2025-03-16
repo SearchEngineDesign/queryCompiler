@@ -2,7 +2,7 @@
 // 
 // Starter file for a string template
 
-
+#pragma once
 #include <cstddef>   // for size_t
 #include <iostream>  // for ostream
 

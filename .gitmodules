@@ -4,3 +4,6 @@
 [submodule "parser"]
 	path = parser
 	url = git@github.com:SearchEngineDesign/parser.git
+[submodule "frontier"]
+	path = frontier
+	url = ./frontier/

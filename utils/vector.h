@@ -4,7 +4,10 @@
 #include <utility>
 #include <initializer_list>
 #include <iostream>
+#pragma once
 
+
+namespace utils {
 template<typename T>
    class vector
    {
@@ -289,3 +292,4 @@ template<typename T>
       T* arr = nullptr;
 
    };
+}
