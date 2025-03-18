@@ -10,3 +10,6 @@
 [submodule "threading"]
 	path = threading
 	url = ./threading/
+[submodule "index"]
+	path = index
+	url = git@github.com:SearchEngineDesign/index.git
