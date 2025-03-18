@@ -6,10 +6,10 @@
 	url = git@github.com:SearchEngineDesign/parser.git
 [submodule "frontier"]
 	path = frontier
-	url = ./frontier/
+	url = git@github.com:SearchEngineDesign/frontier.git
 [submodule "threading"]
 	path = threading
-	url = ./threading/
+	url = git@github.com:SearchEngineDesign/threading.git
 [submodule "index"]
 	path = index
 	url = git@github.com:SearchEngineDesign/index.git
