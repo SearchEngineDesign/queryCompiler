@@ -284,6 +284,11 @@ template<typename T>
             return arr;
          }
 
+      bool empty() const
+         {
+            return (this->vecSize == 0);
+         }
+
    private:
       void reset() {
          delete[] arr;

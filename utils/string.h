@@ -6,6 +6,10 @@
 #include <cstddef>   // for size_t
 #include <iostream>  // for ostream
 
+namespace utils {
+
+
+
 class string
    {
    public:  
@@ -248,3 +252,5 @@ std::ostream &operator<<( std::ostream &os, const string &s )
       os << s.cstr();
       return os;
    }
+
+}

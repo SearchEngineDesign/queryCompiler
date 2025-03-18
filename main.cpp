@@ -118,7 +118,7 @@ int main() {
     
     
     // will run crawlURL and parseFunc 10 times each
-    // will probably want to have them in a different thread pool
+    // will probably want to have them in a different thread pool`
     for (size_t i = 0; i < 10; i++)
     {
         threadPool.submit(crawlUrl, (void*) nullptr);
