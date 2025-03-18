@@ -10,8 +10,6 @@
 #include <cstdint>
 #include <algorithm>
 
-using namespace std;
-
 static const size_t initialSize = 2048;
 
 // You may add additional members or helper functions.
@@ -66,6 +64,7 @@ template< typename Key, typename Value > class HashTable
 
       Bucket< Key, Value > **buckets;
       size_t numberOfBuckets = initialSize;
+      size_t keyCount = 0;
       const double seed = ((double) rand() / (RAND_MAX));
 
       friend class Iterator;
@@ -88,6 +87,10 @@ template< typename Key, typename Value > class HashTable
             }
             return i % mod;
          }
+      size_t getKeyCount() const
+         {
+            return keyCount;
+         }
       size_t size() const
          {
             return numberOfBuckets;
@@ -100,17 +103,18 @@ template< typename Key, typename Value > class HashTable
       Tuple< Key, Value > *Find( const Key k, const Value initialValue )
          {
 
-            size_t index = hashbasic(&k[0], numberOfBuckets);
+            size_t index = hashbasic(k.at(0), numberOfBuckets);
             Bucket< Key, Value > *curr = buckets[index];
             Bucket< Key, Value > *prev = curr;
             
             while (curr != nullptr)
             {
-               if (!strcmp(k, curr->tuple.key)) //maybe compare hash values instead
+               if (k == curr->tuple.key) 
                   return &(curr->tuple);
                prev = curr;
                curr = curr->next;
             }
+            ++keyCount;
             curr = new Bucket< Key, Value >(k, initialValue);
             if (prev) 
                prev->next = curr;
@@ -121,12 +125,12 @@ template< typename Key, typename Value > class HashTable
 
       Tuple< Key, Value > *Find( const Key k ) const
          {
-            size_t index = hashbasic(&k[0], numberOfBuckets);
+            size_t index = hashbasic(k.at(0), numberOfBuckets);
             Bucket< Key, Value > *curr = buckets[index];
             
             while (curr != nullptr)
             {
-               if (!strcmp(k, curr->tuple.key)) //maybe compare hash values instead
+               if (k == curr->tuple.key) //maybe compare hash values instead
                   return &(curr->tuple);
                curr = curr->next;
             }
@@ -279,6 +283,11 @@ template< typename Key, typename Value > class HashTable
                {
                   if (bucket->next == nullptr) {
                      index++;
+                     if (index >= currTable->numberOfBuckets) {
+                        index = currTable->numberOfBuckets;
+                        bucket = currTable->buckets[index];
+                        return *this;
+                     }
                      for (; index < currTable->numberOfBuckets; index++) 
                      {
                         if (currTable->buckets[index] != nullptr)
@@ -290,6 +299,7 @@ template< typename Key, typename Value > class HashTable
                   } else {
                      bucket = bucket->next;
                   }
+                  return *this;
                }
 
             // Postfix ++
@@ -297,6 +307,11 @@ template< typename Key, typename Value > class HashTable
                {
                   if (bucket->next == nullptr) {
                      index++;
+                     if (index >= currTable->numberOfBuckets) {
+                        index = currTable->numberOfBuckets;
+                        bucket = currTable->buckets[index];
+                        return *this;
+                     }
                      for (; index < currTable->numberOfBuckets; index++) 
                      {
                         if (currTable->buckets[index] != nullptr)
@@ -308,6 +323,7 @@ template< typename Key, typename Value > class HashTable
                   } else {
                      bucket = bucket->next;
                   }
+                  return *this;
                }
 
             bool operator==( const Iterator &rhs ) const
@@ -327,14 +343,21 @@ template< typename Key, typename Value > class HashTable
 
       Iterator begin( )
          {
-            if (numberOfBuckets != 0)
-               return Iterator(this, 0, buckets[0]);
+            if (keyCount != 0) {
+               int i = 0;
+               while (buckets[i] == nullptr) {
+                  if (i == numberOfBuckets)
+                     return end();
+                  i++;
+               }
+               return Iterator(this, i, buckets[i]);
+            }
             else
                return end();
          }
 
       Iterator end( )
          {
-            return nullptr;
+            return Iterator(this, numberOfBuckets, buckets[numberOfBuckets]);
          }
    };
