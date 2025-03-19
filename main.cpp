@@ -1,11 +1,11 @@
-#include "Crawler/crawler/Crawl.h"
+#include "Crawler/crawler.h"
 #include "parser/HtmlParser.h"
 #include <pthread.h>
-#include "utils/vector.h"
-#include "Crawler/crawler/frontier.h"
-#include "Crawler/indexParser/index.h"
+#include "utils/include/vector.h"
+#include "frontier/frontier.h"
+#include "index/index.h"
 
-#include "utils/string.h"
+#include "utils/include/string.h"
 #include "utils/ThreadSafeQueue.h"
 
 #include "frontier/frontier.h"
@@ -15,23 +15,19 @@
 // ! WE MUST FULLY PORT TO OUR STRING AND VECTOR CLASS
 // ! SOME OF THESE IMPORTS ARE INCLUDING THEM
 
-
-using namespace utils;
-
-
-static const int ERROR_RATE = 0.0001; // 0.01% error rate for bloom filter
+static const float ERROR_RATE = 0.0001; // 0.01% error rate for bloom filter
 static const int NUM_OBJECTS = 1000000; // estimated number of objects for bloom filter
 
 static const int DEFAULT_PAGE_SIZE = 200000;
 
 struct crawlerResults {
     ParsedUrl url;
-    utils::vector<char> buffer;
+    vector<char> buffer;
     size_t pageSize;
 
     crawlerResults() : url(""), buffer(), pageSize(0) {}
 
-    crawlerResults(const ParsedUrl& u, const utils::vector<char>& v, size_t p) 
+    crawlerResults(const ParsedUrl& u, const vector<char>& v, size_t p) 
         : url(u), buffer(v), pageSize(p) {}
 
 };
@@ -49,7 +45,7 @@ void crawlUrl(void *arg) {
     (void) arg;
 
     ParsedUrl url = ParsedUrl(frontier.getNextURLorWait());
-    utils::vector<char> buffer(DEFAULT_PAGE_SIZE);
+    vector<char> buffer(DEFAULT_PAGE_SIZE);
     size_t pageSize;
 
     crawl(url, buffer.data(), pageSize);
@@ -98,8 +94,8 @@ int main() {
     // TODO: IMPLEMENT THREAD POOL
 
     // !WARN IDK IF YOU CAN RESIZE THREADS SO MAKE SURETO RESERVE
-    utils::vector<pthread_t> crawl_threads;
-    utils::vector<pthread_t> parse_threads;
+    vector<pthread_t> crawl_threads;
+    vector<pthread_t> parse_threads;
     crawl_threads.reserve(NUM_CRAWL_THREADS);
     crawl_threads.reserve(NUM_PARSER_THREADS);
 
@@ -109,7 +105,7 @@ int main() {
     
     
     
-    std::string url = "https://www.google.com";
+    string url = "https://www.google.com";
     // char buffer[MAX_PAGE_SIZE]; //don't use a buffer! write to a mapped file or other data structure
     // size_t pageSize;
     // ParsedUrl purl(url);
