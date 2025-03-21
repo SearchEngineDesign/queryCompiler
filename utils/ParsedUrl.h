@@ -1,14 +1,15 @@
 #pragma once
 // #include "utils/string.h"
 // #include <string>
-#include "include/string.h"
+#include "utils/string.h"
 
+using utils::string;
 class ParsedUrl {
     public:
-        string urlName;
-        string Service, Host, Port, Path;
+        utils::string urlName;
+        utils::string Service, Host, Port, Path, Domain;
     
-        ParsedUrl(const string& url) {
+        ParsedUrl(const utils::string& url) {
             urlName = url;
     
             size_t pos = 0;
@@ -32,6 +33,17 @@ class ParsedUrl {
                 hostEnd == -1 ? hostEnd = url.length() : hostEnd = hostEnd;
                 Host = url.substr(pos, hostEnd - pos);
                 pos += Host.length();
+
+
+                int domainstart = Host.length() - 1;
+
+                while(Host[domainstart] != '.' && domainstart > 0) {
+                    domainstart--;
+                }
+
+                Domain = Host.substr(domainstart + 1);
+
+
     
                 // Extract Port if present
                 if (*url.at(pos) == ':') {
