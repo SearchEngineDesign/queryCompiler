@@ -13,3 +13,6 @@
 [submodule "index"]
 	path = index
 	url = git@github.com:SearchEngineDesign/index.git
+[submodule "isr"]
+	path = isr
+	url = https://github.com/SearchEngineDesign/isr.git
