@@ -135,6 +135,66 @@ Utf8 *WriteUtf8( Utf8 *p, Unicode c )
 
 // Not part of hw
 
+// length of c (size_t) in utf8
+size_t SizeOfCustomUtf8( size_t c )
+   {
+   if ( c <= 0x7F )
+      return 1;  
+   else if ( c <= 0x7FF )
+      return 2;  
+   else if ( c <= 0xFFFF ) 
+      return 3;  
+   else if ( c <= 0x1FFFFF )
+      return 4;  
+   else if ( c <= 0x3FFFFFF )
+      return 5;  
+   else if ( c <= 0x7FFFFFFF )
+      return 6;  
+   else
+      return 0;  
+   }
+
+// write c into Utf8
+void WriteCustomUtf8( Utf8 *p, size_t c )
+   {
+   // length of utf8
+   size_t length = SizeOfCustomUtf8( c ); 
+
+   if( length == 0 || length > 6 )
+      throw std::invalid_argument("Invalid utf8");  
+
+   // set first byte
+   static const uint8_t masks[] = { 0x00, 0xC0, 0xE0, 0xF0, 0xF8, 0xFC };
+   *p = ( c >> ( 6 * ( length - 1 ) ) ) | masks[ length - 1 ];
+
+   // set continuation bytes
+   for ( int i = 1; i < length; i ++ )
+      *( p + i ) = ( ( c >> ( 6 * ( length - i - 1 ) ) ) & 0x3F ) | 0x80;  
+
+   }
+
+// get value from utf8
+size_t GetCustomUtf8( const Utf8 *p ) {
+   size_t indicatedLength = IndicatedLength(p);  
+
+   if( indicatedLength == 0 || indicatedLength > 6 )
+      throw std::invalid_argument("Invalid utf8");  
+
+   size_t result = 0;
+
+   static const uint8_t masks[] = { 0x00, 0x1F, 0x0F, 0x07, 0x03, 0x01 };  
+   result = *p & masks[ indicatedLength - 1 ];  
+
+   result = result << ( 6 * ( indicatedLength - 1 ) );  
+
+   for ( int i = 1; i < indicatedLength; i ++ )
+      result = result | ( ( *( p + i ) & 0x3F ) << ( 6 * ( indicatedLength - i - 1 ) ) );  
+
+   return result;  
+
+   }
+
+
 int StringCompare( const Utf8 *a, const Utf8 *b ) {}
 
 // Unicode string compare up to 'N' UTF-8 characters (not bytes)
