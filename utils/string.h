@@ -484,8 +484,5 @@ class string
       char *m_data;
    };
 
-std::ostream &operator<<( std::ostream &os, const string &s ){
-      os << s.cstr();
-      return os;
-   }
+std::ostream &operator<<( std::ostream &os, const string &s );  
 }
