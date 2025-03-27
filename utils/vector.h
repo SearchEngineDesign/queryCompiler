@@ -1,10 +1,10 @@
 // vector.h
 // 
 // Starter file for a vector template
+#pragma once
 #include <utility>
 #include <initializer_list>
 #include <iostream>
-#pragma once
 
 
 namespace utils {
@@ -279,6 +279,20 @@ template<typename T>
             return arr + vecSize;
          }
 
+      T& back() const
+         {
+            if (vecSize == 0)
+               throw std::runtime_error("back on empty vector");
+            return arr[vecSize - 1];
+         }
+
+      T& front() const
+         {
+            if (vecSize == 0)
+               throw std::runtime_error("front on empty vector");
+            return arr[0];
+         }
+
       T* data()
          {
             return arr;
@@ -287,6 +301,28 @@ template<typename T>
       bool empty() const
          {
             return (this->vecSize == 0);
+         }
+
+      void clear()
+         {
+            delete[] arr;  
+            vecSize = 0;
+            vecCapacity = 0;
+            arr = nullptr;
+         }
+
+      template<typename... Args>
+      void emplace_back(Args&&... args) 
+         {
+         if ( this->vecSize >= this->vecCapacity ) 
+            {
+            if ( this->vecCapacity == 0 ) 
+               reserve( this->vecCapacity + 1 );
+            else 
+               reserve( this->vecCapacity * 2 );
+            }
+         new(this->arr + this->vecSize) T( std::forward<Args>(args)... );
+         this->vecSize++;
          }
 
    private:

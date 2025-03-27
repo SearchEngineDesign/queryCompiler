@@ -119,29 +119,29 @@ void WriteCustomUtf8( Utf8 *p, size_t c );
 // get value from utf8
 size_t GetCustomUtf8( const Utf8 *p );
 
-// UTF-8 String compares.
-// Same return values as strcmp( ).
+// // UTF-8 String compares.
+// // Same return values as strcmp( ).
 
-int StringCompare( const Utf8 *a, const Utf8 *b );
+// int StringCompare( const Utf8 *a, const Utf8 *b );
 
-// Unicode string compare up to 'N' UTF-8 characters (not bytes)
-// from two UTF-8 strings.
+// // Unicode string compare up to 'N' UTF-8 characters (not bytes)
+// // from two UTF-8 strings.
 
-int StringCompare( const Utf8 *a, const Utf8 *b, size_t N );
+// int StringCompare( const Utf8 *a, const Utf8 *b, size_t N );
 
-// Case-independent compares.
+// // Case-independent compares.
 
-int StringCompareI( const Utf8 *a, const Utf8 *b );
-int StringCompareI( const Utf8 *a, const Utf8 *b, size_t N );
+// int StringCompareI( const Utf8 *a, const Utf8 *b );
+// int StringCompareI( const Utf8 *a, const Utf8 *b, size_t N );
 
-// Lower-case only Ascii characters < 0x80 except
-// spaces and control characters.
+// // Lower-case only Ascii characters < 0x80 except
+// // spaces and control characters.
 
-Unicode ToLower( Unicode c );
+// Unicode ToLower( Unicode c );
 
-// Identify Unicode code points representing Ascii
-// punctuation, spaces and control characters.
+// // Identify Unicode code points representing Ascii
+// // punctuation, spaces and control characters.
 
-bool IsPunctuation( Unicode c );
-bool IsSpace( Unicode c );
-bool IsControl( Unicode c );
+// bool IsPunctuation( Unicode c );
+// bool IsSpace( Unicode c );
+// bool IsControl( Unicode c );
