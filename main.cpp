@@ -1,11 +1,11 @@
-#include "Crawler/crawler.h"
+#include "crawler/crawler.h"
 #include "parser/HtmlParser.h"
 #include <pthread.h>
-#include "utils/include/vector.h"
+#include "utils/vector.h"
 #include "frontier/frontier.h"
 #include "index/index.h"
 
-#include "utils/include/string.h"
+#include "utils/string.h"
 #include "utils/ThreadSafeQueue.h"
 
 #include "frontier/frontier.h"
@@ -19,6 +19,8 @@ static const float ERROR_RATE = 0.0001; // 0.01% error rate for bloom filter
 static const int NUM_OBJECTS = 1000000; // estimated number of objects for bloom filter
 
 static const int DEFAULT_PAGE_SIZE = 200000;
+
+Crawler crawler;
 
 struct crawlerResults {
     ParsedUrl url;
@@ -48,7 +50,7 @@ void crawlUrl(void *arg) {
     vector<char> buffer(DEFAULT_PAGE_SIZE);
     size_t pageSize;
 
-    crawl(url, buffer.data(), pageSize);
+    crawler.crawl(url, buffer.data(), pageSize);
  
     crawlerResults cResult(url, buffer, pageSize);
     crawlResultsQueue.put(cResult);

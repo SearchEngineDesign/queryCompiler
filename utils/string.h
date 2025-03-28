@@ -5,9 +5,8 @@
 #pragma once
 #include <cstddef>   // for size_t
 #include <ostream>  // for ostream
-
-namespace utils
-{
+#include <unistd.h>
+#include <cstring>
 
 class string
    {
@@ -103,7 +102,7 @@ class string
       // REQUIRES: Nothing
       // MODIFIES: Nothing
       // EFFECTS: Returns m_data
-      const char *c_str() 
+      const char *c_str() const
          {
             return m_data;
          }
@@ -246,7 +245,7 @@ class string
       // REQUIRES: Nothing
       // MODIFIES: *this
       // EFFECTS: Appends c to the string
-      void pushBack( char c )
+      void push_back( char c )
          {
             if ( m_size == m_capacity - 1 )
             {
@@ -429,7 +428,6 @@ class string
             return -1; 
          }
 
-
       char *at( size_t pos ) const 
          {
             return m_data + pos;
@@ -476,13 +474,10 @@ class string
          return result;
       }
 
-      
-
    private:
       size_t m_size;
       size_t m_capacity;
       char *m_data;
    };
 
-std::ostream &operator<<( std::ostream &os, const string &s );  
-}
+std::ostream &operator<<( std::ostream &os, const string &s );

@@ -16,7 +16,7 @@ static float DOMAIN_WEIGHTS[DOMAIN_COUNT] = {1, 1, 1, 2, 2, 1};
 
 
 
-using utils::string;
+using string;
 
 
 class StaticRanker {
