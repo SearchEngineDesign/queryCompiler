@@ -142,13 +142,18 @@ struct SerialPostingList
 
             size_t tokenSize = SerialString::BytesRequired(p->getIndex());
             SerialString::Write(buffer + offset, tokenSize, p->getIndex());
-
             offset += tokenSize;
 
             size_t vectorSize = SerialVector::BytesRequired(p->getList());
             SerialVector::Write(buffer + offset, vectorSize, *(p->getList()));
-            
+            offset += vectorSize;
 
+            t->seekIndex = p->getSeekIndex();
+
+            const std::pair<size_t, size_t> *table = p->getSeekTable();
+
+            for (int i = 0; i < 256; i++)
+               t->SeekTable[i] = (*table)[i];
          }
    };
 
