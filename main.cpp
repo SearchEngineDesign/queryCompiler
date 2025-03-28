@@ -20,7 +20,6 @@ static const int NUM_OBJECTS = 1000000; // estimated number of objects for bloom
 
 static const int DEFAULT_PAGE_SIZE = 200000;
 
-Crawler crawler;
 
 struct crawlerResults {
     ParsedUrl url;
@@ -37,6 +36,8 @@ struct crawlerResults {
 
 ThreadSafeFrontier frontier(NUM_OBJECTS, ERROR_RATE);
 ThreadSafeQueue<crawlerResults> crawlResultsQueue;
+Crawler crawler;
+IndexHandler indexHandler("/Users/tkmaher/eecs498/SearchEngine/index/chunks");
 
 void crawlUrl(void *arg) {
     // crawlArg *cArg = (crawlArg *) arg;
@@ -67,7 +68,7 @@ struct parserArg {
 };
 
 void parseFunc(void *arg) {
-    // parserArg* pArg = (parserArg *) arg;
+    parserArg* pArg = (parserArg *) arg;
 
     // (void) arg;
 
@@ -80,7 +81,8 @@ void parseFunc(void *arg) {
     }
 
     //TODO: acquire lock for index
-    // pArg->index->addDocument(parser);
+    //pArg->index->addDocument(parser);
+    indexHandler.index->addDocument(parser);
 
     pthread_exit( ( void* ) arg );
 }
@@ -103,14 +105,9 @@ int main() {
 
 
     ThreadPool threadPool(NUM_CRAWL_THREADS);
-
     
     
-    
-    string url = "https://www.google.com";
-    // char buffer[MAX_PAGE_SIZE]; //don't use a buffer! write to a mapped file or other data structure
-    // size_t pageSize;
-    // ParsedUrl purl(url);
+    string url = "https://crawler-test.com/";
     
     frontier.insert(url);
     
