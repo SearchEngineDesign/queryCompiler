@@ -66,6 +66,7 @@ struct SerialString
 
    };
 
+
 struct SerialVector
    {
    public:
@@ -74,6 +75,36 @@ struct SerialVector
       Post data[ Unknown ];
 
       static size_t BytesRequired(const vector<Post> * vec) 
+         {
+            // for size and capacity
+            size_t size = sizeof(size_t) << 1;
+            // for each post -- but posts are variable length
+            for (auto &i : *vec) {
+               size += i.length();
+            }
+            
+            return RoundUp(size, sizeof(size_t));
+         }
+
+      static char *Write( char *buffer, size_t len,
+         const vector<Post> &vec ) {
+            SerialVector* t = reinterpret_cast<SerialVector*>(buffer);
+            t->size = vec.size();
+            t->capacity = vec.capacity();
+            for ( size_t i = 0; i < vec.size(); i++ )
+               memcpy(&(t->data[i]), &vec[i], vec[i].length());
+         }
+         
+   };
+
+struct SerialDocumentVector
+   {
+   public:
+      size_t size, capacity;
+
+      SerialString data[ Unknown ];
+
+      static size_t BytesRequired(const vector<string> * vec) 
          {
             // for size and capacity
             size_t size = sizeof(size_t) << 1;
@@ -150,10 +181,10 @@ struct SerialPostingList
 
             t->seekIndex = p->getSeekIndex();
 
-            const std::pair<size_t, size_t> *table = p->getSeekTable();
+            const std::pair<size_t, size_t> table[256] = *(p->getSeekTable());
 
             for (int i = 0; i < 256; i++)
-               t->SeekTable[i] = (*table)[i];
+               t->SeekTable[i] = table[i];
          }
    };
 
@@ -222,17 +253,18 @@ class HashBlob
       // Define a MagicNumber and Version so you can validate
       // a HashBlob really is one of your HashBlobs.
 
-      size_t keyCount,
-         BlobSize,
-         NumberOfBuckets,
-         Buckets[ Unknown ];
-
-      // The SerialTuples will follow immediately after.
+      size_t 
+         BlobSize, // size of blob
+         WordsInIndex, // mv of index
+         DocumentsInIndex, // mv of index
+         keyCount, // mv of dict
+         NumberOfBuckets, // mv of dict
+         Buckets[ Unknown ]; // arr of byte offsets to tuples in dict
 
 
       const SerialTuple *Find( const char *key ) const
          {
-         // Search for the key k and return a pointer to the
+         /*/ Search for the key k and return a pointer to the
          // ( key, value ) entry.  If the key is not found,
          // return nullptr.
 
@@ -256,7 +288,7 @@ class HashBlob
             
          }
 
-         return nullptr;
+         return nullptr; */
          }
 
 
@@ -309,6 +341,7 @@ class HashBlob
          char *mem = new char[size];
          HashBlob *blob = reinterpret_cast<HashBlob*>(mem);
 
+         blob->keyCount = hashTable->keyCount;
          blob->BlobSize = size;
          blob->NumberOfBuckets = hashTable->size();
 
@@ -336,6 +369,8 @@ class HashBlob
          // Your code here.
          }
    };
+
+
 
 class HashFile
    {
