@@ -5,15 +5,13 @@
 #include "frontier/frontier.h"
 #include "index/index.h"
 
+
 #include "utils/string.h"
 #include "utils/ThreadSafeQueue.h"
 
 #include "frontier/frontier.h"
 
 #include "threading/ThreadPool.h"
-
-// ! WE MUST FULLY PORT TO OUR STRING AND VECTOR CLASS
-// ! SOME OF THESE IMPORTS ARE INCLUDING THEM
 
 static const float ERROR_RATE = 0.0001; // 0.01% error rate for bloom filter
 static const int NUM_OBJECTS = 1000000; // estimated number of objects for bloom filter
@@ -37,7 +35,7 @@ struct crawlerResults {
 ThreadSafeFrontier frontier(NUM_OBJECTS, ERROR_RATE);
 ThreadSafeQueue<crawlerResults> crawlResultsQueue;
 Crawler crawler;
-IndexHandler indexHandler("/Users/tkmaher/eecs498/SearchEngine/index/chunks");
+IndexWriteHandler indexHandler("/Users/tkmaher/eecs498/SearchEngine/index/chunks");
 
 void crawlUrl(void *arg) {
     // crawlArg *cArg = (crawlArg *) arg;
@@ -61,16 +59,7 @@ void crawlUrl(void *arg) {
     pthread_exit( arg );
 }
 
-struct parserArg {
-    Index* index;
-    char *buffer;
-    size_t pageSize;
-};
-
 void parseFunc(void *arg) {
-    parserArg* pArg = (parserArg *) arg;
-
-    // (void) arg;
 
     crawlerResults cResult = crawlResultsQueue.get();
 
@@ -80,9 +69,16 @@ void parseFunc(void *arg) {
         frontier.insert(link.URL);
     }
 
-    //TODO: acquire lock for index
-    //pArg->index->addDocument(parser);
-    indexHandler.index->addDocument(parser);
+    indexHandler.addDocument(parser);
+
+    //for test
+    indexHandler.WriteIndex();
+
+    IndexReadHandler indexReader;
+    indexReader.ReadIndex(indexHandler.getFilename().c_str());
+    indexReader.Find("HTML");
+
+    //end test
 
     pthread_exit( ( void* ) arg );
 }

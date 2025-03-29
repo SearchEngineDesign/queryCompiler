@@ -17,8 +17,6 @@ static const size_t initialSize = 2048;
 
 // Compare C-strings, return true if they are the same.
 
-bool CompareEqual( const char *L, const char *R );
-
 template< typename Key, typename Value > class Tuple
    {
    public:
@@ -58,7 +56,7 @@ public:
 template< typename Key, typename Value > class HashTable
    {
    private:
-   friend class HashBlob;
+   friend class IndexBlob;
 
       // Your code here.
 
@@ -69,7 +67,7 @@ template< typename Key, typename Value > class HashTable
 
       friend class Iterator;
       friend class TopN;
-      friend class HashBlob;
+      friend class IndexBlob;
 
       char **optBuffer;
       size_t bufSize = 0;

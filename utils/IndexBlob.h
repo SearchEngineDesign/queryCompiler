@@ -1,6 +1,9 @@
 #pragma once
 
-// HashBlob, a serialization of a HashTable into one contiguous
+#ifndef INDEXBLOB_H
+#define INDEXBLOB_H
+
+// IndexBlob, a serialization of a HashTable into one contiguous
 // block of memory, possibly memory-mapped to a HashFile.
 
 // Nicole Hamilton  nham@umich.edu
@@ -19,12 +22,14 @@
 #include "HashTable.h"
 #include "string.h"
 #include "vector.h"
-#include "../index/index.h"
 
 using Hash = HashTable< string, PostingList >;
 using Pair = Tuple< string, PostingList >;
 using HashBucket = Bucket< string, PostingList >;
 
+class Index;
+class PostingList;
+class Post;
 
 static const size_t Unknown = 0;
 
@@ -38,6 +43,11 @@ size_t RoundUp( size_t length, size_t boundary )
       mask = ~( oneless );
    return ( length + oneless ) & mask;
    }
+
+struct SerialPost 
+   {
+   char data[ Unknown ];
+   };
 
 struct SerialString
    {
@@ -55,74 +65,38 @@ struct SerialString
             return RoundUp(size, sizeof(size_t));
          }
 
-      static char *Write( char *buffer, size_t len,
-         const string &str ) {
+      static char *Write( char *buffer, const string *str ) {
             SerialString* t = reinterpret_cast<SerialString*>(buffer);
-            t->size = str.size();
-            t->capacity = str.capacity();
-            for ( size_t i = 0; i < str.size(); i++ )
-               t->data[i] = *(str.at(i));
+            t->size = str->size();
+            t->capacity = str->capacity();
+            for ( size_t i = 0; i < str->size(); i++ )
+               t->data[i] = *(str->at(i));
          }
 
-   };
+      const char *c_str() const {
+         return data;
+      }
 
+      const size_t getSize() {
+         return size;
+      }
 
-struct SerialVector
-   {
-   public:
-      size_t size, capacity;
-
-      Post data[ Unknown ];
-
-      static size_t BytesRequired(const vector<Post> * vec) 
-         {
-            // for size and capacity
-            size_t size = sizeof(size_t) << 1;
-            // for each post -- but posts are variable length
-            for (auto &i : *vec) {
-               size += i.length();
-            }
-            
-            return RoundUp(size, sizeof(size_t));
-         }
-
-      static char *Write( char *buffer, size_t len,
-         const vector<Post> &vec ) {
-            SerialVector* t = reinterpret_cast<SerialVector*>(buffer);
-            t->size = vec.size();
-            t->capacity = vec.capacity();
-            for ( size_t i = 0; i < vec.size(); i++ )
-               memcpy(&(t->data[i]), &vec[i], vec[i].length());
-         }
-         
    };
 
 struct SerialDocumentVector
    {
    public:
-      size_t size, capacity;
-
       SerialString data[ Unknown ];
 
       static size_t BytesRequired(const vector<string> * vec) 
          {
-            // for size and capacity
-            size_t size = sizeof(size_t) << 1;
-            // for each post -- but posts are variable length
+            size_t size = 0;
+            // for each post
             for (auto &i : *vec) {
-               size += i.length();
+               size += i.size();
             }
             
             return RoundUp(size, sizeof(size_t));
-         }
-
-      static char *Write( char *buffer, size_t len,
-         const vector<Post> &vec ) {
-            SerialVector* t = reinterpret_cast<SerialVector*>(buffer);
-            t->size = vec.size();
-            t->capacity = vec.capacity();
-            for ( size_t i = 0; i < vec.size(); i++ )
-               memcpy(&(t->data[i]), &vec[i], vec[i].length());
          }
          
    };
@@ -131,28 +105,35 @@ struct SerialPostingList
    {
    public:
 
-      size_t lastPos, lastDoc, documentCount;
+      size_t lastPos, lastDoc, documentCount, posts;
       char type;
-      SerialString token;
-      SerialVector list;
       uint8_t seekIndex;
-      std::pair<size_t, size_t> SeekTable[256];
+      std::pair<size_t, size_t> SeekTable[ Unknown ];
+
+      // byte offsets of each individual post 
+      size_t list[ Unknown ];
 
       static size_t BytesRequired(const PostingList * p) 
          {
+            vector<Post> list = *(p->getList());
+
             size_t size = 0;
-            // the 3 size_t member variables -- 
-            size += sizeof(size_t) * 3;
+            // the 4 size_t member variables
+            size += sizeof(size_t) << 2;
             // token type
             size += sizeof(char);
-            // token
-            size += SerialString::BytesRequired(p->getIndex());
-            // post vector
-            size += SerialVector::BytesRequired(p->getList());
             // the uint8_t member variable -- seek index
             size += sizeof(uint8_t);
             // the seek list
-            size += sizeof(std::pair<size_t, size_t>) >> 8;
+            size += (sizeof(size_t) << 1) * p->getSeekIndex();
+            // list of post offsets
+            size += sizeof(size_t) * list.size();
+
+            // post vector size
+            for (int i = 0; i < list.size(); i++) {
+               size += list[i].length();
+            }
+            
             
             return RoundUp(size, sizeof(size_t));
          }
@@ -162,29 +143,44 @@ struct SerialPostingList
          const PostingList *p ) {
             size_t offset = 0;
             SerialPostingList* t = reinterpret_cast<SerialPostingList*>(buffer);
+            vector<Post> listIn = *(p->getList());
 
             t->lastPos = p->lastPos;
             t->lastDoc = p->lastDoc;
             t->documentCount = p->getDocCount();
+            t->posts = listIn.size();
             t->type = p->getType();
-
-            offset += sizeof(size_t) * 3;
-            offset += sizeof(char);
-
-            size_t tokenSize = SerialString::BytesRequired(p->getIndex());
-            SerialString::Write(buffer + offset, tokenSize, p->getIndex());
-            offset += tokenSize;
-
-            size_t vectorSize = SerialVector::BytesRequired(p->getList());
-            SerialVector::Write(buffer + offset, vectorSize, *(p->getList()));
-            offset += vectorSize;
 
             t->seekIndex = p->getSeekIndex();
 
-            const std::pair<size_t, size_t> table[256] = *(p->getSeekTable());
+            offset += sizeof(size_t) * 5;
+            offset += sizeof(char);
+            offset = RoundUp(offset, sizeof(size_t));
 
-            for (int i = 0; i < 256; i++)
-               t->SeekTable[i] = table[i];
+            const std::pair<size_t, size_t> *seekTable = p->getSeekTable();
+            size_t increment = sizeof(size_t) << 1;
+            for (int i = 0; i < p->getSeekIndex(); i++) {
+               memcpy(buffer + offset, &(seekTable[i]), increment);
+               offset += increment;
+            }
+
+            offset = RoundUp(offset, sizeof(size_t));
+            uint8_t postSize = 0;
+            Post post;
+
+            for (int i = 0; i < listIn.size(); i++) {
+               postSize = listIn[i].length();
+               memcpy(buffer + offset, listIn[i].getData(), postSize);
+               t->list[i] = offset;
+               offset += postSize;
+            }
+               
+         }
+
+         const SerialPost *getPost( size_t i ) const {
+            if (i >= posts)
+               return nullptr;
+            return reinterpret_cast<SerialPost*>((char*)this + list[i]);
          }
    };
 
@@ -193,10 +189,8 @@ struct SerialTuple
 
    public:
 
-      // The Key will be a C-string of whatever length.
-      SerialString Key;
-
-      SerialPostingList Value;
+      // Total size, starting point of value
+      size_t size, valueOffset;
 
       // Calculate the bytes required to encode a HashBucket as a
       // SerialTuple.
@@ -204,12 +198,15 @@ struct SerialTuple
       static size_t BytesRequired( const HashBucket *b )
          {
             size_t size = 0;
+
+            // size_t size, valueOffset
+            size += sizeof(size_t) << 1;
+
             // string key
             size += SerialString::BytesRequired(b->tuple.key);
 
             // PL value
             size += SerialPostingList::BytesRequired(&(b->tuple.value));
-
             
             return RoundUp(size, sizeof(size_t));
          }
@@ -220,85 +217,102 @@ struct SerialTuple
       static char *Write( char *buffer, size_t len,
             const HashBucket *b )
          {
-         size_t offset = 0;
          SerialTuple* t = reinterpret_cast<SerialTuple*>(buffer);
-
          size_t keySize = SerialString::BytesRequired(b->tuple.key);
-         SerialString::Write(buffer + offset, keySize, b->tuple.key);
+         size_t offset = sizeof(size_t) << 1;
+
+         // writing the key (string)
+         SerialString::Write(buffer + offset, &b->tuple.key);
          offset += keySize;
+         offset = RoundUp(offset, sizeof(size_t));
+         t->valueOffset = offset;
          
+         // writing the value (posting list)
          size_t valueSize = SerialPostingList::BytesRequired(&(b->tuple.value));
          SerialPostingList::Write(buffer + offset, valueSize, &(b->tuple.value));
          offset += valueSize;
+         offset = RoundUp(offset, sizeof(size_t));
 
-         return (buffer + len + 1);
+         // finally, write the size
+         t->size = offset;
+
          }
+
+      const size_t getSize() {
+         return size;
+      }
+
+      const SerialString* Key() {
+         return reinterpret_cast<SerialString*>((char *)this + (sizeof(size_t) << 1));
+      }
+
+      const SerialPostingList* Value() const {
+         return reinterpret_cast<SerialPostingList*>((char *)this + valueOffset);
+      }
   };
 
 
-class HashBlob
+class IndexBlob
    {
-   // This will be a hash specifically designed to hold an
-   // entire hash table as a single contiguous blob of bytes.
-   // Pointers are disallowed so that the blob can be
-   // relocated to anywhere in memory
-
-   // The basic structure should consist of some header
-   // information including the number of buckets and other
-   // details followed by a concatenated list of all the
-   // individual lists of tuples within each bucket.
 
    public:
-
-      // Define a MagicNumber and Version so you can validate
-      // a HashBlob really is one of your HashBlobs.
 
       size_t 
          BlobSize, // size of blob
          WordsInIndex, // mv of index
          DocumentsInIndex, // mv of index
          keyCount, // mv of dict
-         NumberOfBuckets, // mv of dict
-         Buckets[ Unknown ]; // arr of byte offsets to tuples in dict
+         NumberOfBuckets; // mv of dict
+         
+      size_t Buckets[ Unknown ]; // arr of byte offsets to tuples in dict
+
+      size_t Documents[ Unknown ]; // arr of byte offsets to documents in document table
 
 
+      // Returns the bucket in dict with token == key.
+      // If there is no matching key, returns null.
       const SerialTuple *Find( const char *key ) const
          {
-         /*/ Search for the key k and return a pointer to the
+         // Search for the key k and return a pointer to the
          // ( key, value ) entry.  If the key is not found,
          // return nullptr.
 
          // Your code here.
-         size_t index = Hash::hashbasic(key, NumberOfBuckets);
-         size_t bucketStart = Buckets[index];
+         size_t i = Hash::hashbasic(key, NumberOfBuckets);
+         size_t bucketStart = Buckets[i];
          SerialTuple *curr = reinterpret_cast<SerialTuple*>((char *)this + bucketStart);
 
          size_t bucketEnd;
-         (index == NumberOfBuckets - 1) ? bucketEnd = BlobSize : bucketEnd = Buckets[index+1];
+         (i == NumberOfBuckets - 1) ? bucketEnd = BlobSize : bucketEnd = Buckets[i+1];
 
          while (bucketStart < bucketEnd)
          {
-            if (!strcmp(curr->Key, key))
+            if (!strcmp(curr->Key()->c_str(), key))
             {
                return curr;
             } else {
-               bucketStart += curr->Length;
+               bucketStart += curr->getSize();
                curr = reinterpret_cast<SerialTuple*>((char *)this + bucketStart);
             }
             
          }
 
-         return nullptr; */
+         return nullptr; 
          }
 
+      // Returns a SerialString of the document name in the document table with index i. 
+      // If there is no index i, returns null.
+      const SerialString *getDocument( size_t i ) {
+         if (DocumentsInIndex <= i)
+            return nullptr;
+         return reinterpret_cast<SerialString*>((char *)this + Documents[i]);
+      }
 
-      static size_t BytesRequired( const Hash *hashTable, size_t &offset )
+      static size_t BytesRequired( const Hash *hashTable )
          {
          // Calculate how much space it will take to
-         // represent a HashTable as a HashBlob.
+         // represent a HashTable as a IndexBlob.
 
-         //space for 2048 offsets of size size_t + the 3 hashblob members
-         offset = (hashTable->size()+3) * sizeof(size_t);
          size_t bucketSpace = 0;
          for (int i = 0; i < hashTable->size(); i++)
             {
@@ -311,49 +325,72 @@ class HashBlob
                }
             }
 
-         return offset + bucketSpace;
+         return bucketSpace;
          }
 
-      // Write a HashBlob into a buffer, returning a
-      // pointer to the blob.
 
-      static HashBlob *Write( HashBlob *hb, size_t bytes,
-            const Hash *hashTable )
-         {
-         // Your code here.
-         // What does this do ???
-
-         return nullptr;
-         }
-
-      // Create allocates memory for a HashBlob of required size
-      // and then converts the HashTable into a HashBlob.
+      // Create allocates memory for a IndexBlob of required size
+      // and then converts the HashTable into a IndexBlob.
       // Caller is responsible for discarding when done.
 
       // (No easy way to override the new operator to create a
       // variable sized object.)
 
-      static HashBlob *Create( const Hash *hashTable )
+      static IndexBlob *Create( Index *index )
          {
-         //allocating the whole blob
-         size_t offset = 0;
-         size_t size = HashBlob::BytesRequired( hashTable, offset );
-         char *mem = new char[size];
-         HashBlob *blob = reinterpret_cast<HashBlob*>(mem);
+         const Hash *hashTable = index->getDict();
+         const vector<string> *documents = index->getDocuments();
 
-         blob->keyCount = hashTable->keyCount;
+         size_t offset = 0;
+         // space for the 5 blob size_t members
+         size_t size = 5 * sizeof(size_t);
+         // space to store the document offset array
+         size += documents->size() * sizeof(size_t);
+         // space to store the bucket offset array
+         size += hashTable->size() * sizeof(size_t);
+
+         // set offset as the starting point for writing
+         offset = size;
+
+         // space for the document table
+         size += SerialDocumentVector::BytesRequired(documents);
+         // space for the dict
+         size += IndexBlob::BytesRequired( hashTable );
+         
+         // allocating memory
+         char *mem = new char[size];
+         IndexBlob *blob = reinterpret_cast<IndexBlob*>(mem);
+
+         // assigning mvs
          blob->BlobSize = size;
+         blob->WordsInIndex = index->WordsInIndex;
+         blob->DocumentsInIndex = index->DocumentsInIndex;
+         blob->keyCount = hashTable->keyCount;
          blob->NumberOfBuckets = hashTable->size();
+
+         // writing the document vector
+         for (int i = 0; i < documents->size(); i++)
+         {
+            blob->Documents[i] = offset;
+            const string * curr = &(documents->operator[](i));
+            size_t sSize = curr->size();
+            SerialString::Write(mem + offset, curr);
+            offset += sSize;
+            offset = RoundUp(offset, sizeof(size_t));
+         }
+         blob->getDocument(0);
 
          for (int i = 0; i < hashTable->size(); i++)
          {
             blob->Buckets[i] = offset;
             HashBucket *curr = hashTable->at(i);
             
+            // writing the buckets
             while (curr != nullptr) {
                size_t tSize = SerialTuple::BytesRequired(curr);
                SerialTuple::Write(mem + offset, tSize, curr);
                offset += tSize;
+               offset = RoundUp(offset, sizeof(size_t));
                curr = curr->next;
             }
             
@@ -364,9 +401,9 @@ class HashBlob
 
       // Discard
 
-      static void Discard( HashBlob *blob )
+      static void Discard( IndexBlob *blob )
          {
-         // Your code here.
+         delete blob;
          }
    };
 
@@ -377,7 +414,7 @@ class HashFile
    private:
 
       int fd;
-      HashBlob *blob;
+      IndexBlob *blob;
       struct stat fileInfo;
 
       size_t FileSize( int f )
@@ -388,7 +425,7 @@ class HashFile
 
    public:
 
-      const HashBlob *Blob( )
+      const IndexBlob *Blob( )
          {
          return blob;
          }
@@ -406,7 +443,7 @@ class HashFile
             if (FileSize(fd) == -1) //get file size
                perror("fstat");
 
-            blob = reinterpret_cast<HashBlob*>(mmap(nullptr, fileInfo.st_size, 
+            blob = reinterpret_cast<IndexBlob*>(mmap(nullptr, fileInfo.st_size, 
                                        PROT_READ, MAP_PRIVATE, fd, 0)); //map bytes to 'blob'
             if (blob == MAP_FAILED)
                perror("mmap");
@@ -416,7 +453,7 @@ class HashFile
       HashFile( const char *filename, const Hash *hashtable )
          {
          // Open the file for write, map it, write
-         // the hashtable out as a HashBlob, and note
+         // the hashtable out as a IndexBlob, and note
          // the blob address.
 
          // Your code here.
@@ -428,3 +465,7 @@ class HashFile
             close(fd);                       //not sure if this should happen here or earlier
          }
    };
+
+   
+
+#endif
