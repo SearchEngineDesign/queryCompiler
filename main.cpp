@@ -18,6 +18,8 @@ static const int NUM_OBJECTS = 1000000; // estimated number of objects for bloom
 
 static const int DEFAULT_PAGE_SIZE = 200000;
 
+void parseFunc(void *arg);
+void crawlFunc(void *arg);
 
 struct crawlerResults {
     ParsedUrl url;
@@ -34,8 +36,10 @@ struct crawlerResults {
 
 ThreadSafeFrontier frontier(NUM_OBJECTS, ERROR_RATE);
 ThreadSafeQueue<crawlerResults> crawlResultsQueue;
-Crawler crawler;
 IndexWriteHandler indexHandler("/Users/tkmaher/eecs498/SearchEngine/index/chunks");
+
+ThreadPool crawlPool(10);
+ThreadPool parsePool(10);
 
 void crawlUrl(void *arg) {
     // crawlArg *cArg = (crawlArg *) arg;
@@ -49,14 +53,16 @@ void crawlUrl(void *arg) {
     vector<char> buffer(DEFAULT_PAGE_SIZE);
     size_t pageSize;
 
-    crawler.crawl(url, buffer.data(), pageSize);
+    Crawler::crawl(url, buffer.data(), pageSize);
  
     crawlerResults cResult(url, buffer, pageSize);
     crawlResultsQueue.put(cResult);
 
+    parsePool.submit(parseFunc, (void*) nullptr);
+
     // return (void *) cArg;
 
-    pthread_exit( arg );
+    //pthread_exit( arg );
 }
 
 void parseFunc(void *arg) {
@@ -71,7 +77,11 @@ void parseFunc(void *arg) {
 
     indexHandler.addDocument(parser);
 
-    pthread_exit( ( void* ) arg );
+    if (!parser.links.empty()) {
+        crawlPool.submit(crawlUrl, (void*) nullptr);
+    }
+
+    //pthread_exit( ( void* ) arg );
 }
 
 
@@ -80,18 +90,6 @@ int main() {
     static const int NUM_CRAWL_THREADS = 10;
     static const int NUM_PARSER_THREADS = 10;
     static const int MAX_PAGE_SIZE = 2000000;
-    
-    
-    // TODO: IMPLEMENT THREAD POOL
-
-    // !WARN IDK IF YOU CAN RESIZE THREADS SO MAKE SURETO RESERVE
-    vector<pthread_t> crawl_threads;
-    vector<pthread_t> parse_threads;
-    crawl_threads.reserve(NUM_CRAWL_THREADS);
-    crawl_threads.reserve(NUM_PARSER_THREADS);
-
-
-    ThreadPool threadPool(NUM_CRAWL_THREADS);
     
     
     string url = "https://www.wikipedia.org/";
@@ -103,9 +101,11 @@ int main() {
     // will probably want to have them in a different thread pool`
     for (size_t i = 0; i < 10; i++)
     {
-        threadPool.submit(crawlUrl, (void*) nullptr);
-        threadPool.submit(parseFunc, (void*) nullptr);
+        crawlPool.submit(crawlUrl, (void*) nullptr);
+        parsePool.submit(parseFunc, (void*) nullptr);
     }
+
+    while(true)
     
 
     return 0;
