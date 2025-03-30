@@ -71,15 +71,6 @@ void parseFunc(void *arg) {
 
     indexHandler.addDocument(parser);
 
-    //for test
-    indexHandler.WriteIndex();
-
-    IndexReadHandler indexReader;
-    indexReader.ReadIndex(indexHandler.getFilename().c_str());
-    indexReader.Find("HTML");
-
-    //end test
-
     pthread_exit( ( void* ) arg );
 }
 
@@ -103,7 +94,7 @@ int main() {
     ThreadPool threadPool(NUM_CRAWL_THREADS);
     
     
-    string url = "https://crawler-test.com/";
+    string url = "https://www.wikipedia.org/";
     
     frontier.insert(url);
     
@@ -117,26 +108,5 @@ int main() {
     }
     
 
-    for (size_t i = 0; i < NUM_CRAWL_THREADS; i++)
-    {
-        // const int rc = pthread_create( &crawl_threads[i], NULL, crawlUrl, (void*) nullptr);
-    }
-
-    for (size_t i = 0; i < NUM_PARSER_THREADS; i++)
-    {
-        // const int rc = pthread_create( &parse_threads[i], NULL, parseFunc, (void*) nullptr);
-    }
-    
-
-
-    for (size_t i = 0; i < crawl_threads.size(); i++)
-    {
-        // pthread_join( crawl_threads[i], NULL );
-    }
-    
-    for (size_t i = 0; i < parse_threads.size(); i++)
-    {
-        // pthread_join( parse_threads[i], NULL );
-    }
     return 0;
 }

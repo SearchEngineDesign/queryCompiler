@@ -138,12 +138,6 @@ template< typename Key, typename Value > class HashTable
       //optimize: sorts each bucket by descending order.
       void Optimize( double loading = 1.5 )
          {
-            //for ( int i = 0; i < numberOfBuckets; i++)
-            //   buckets[i] = MergeSort(buckets[i]); 
-         }
-
-      void topbuckets( double loading = 1.5 )
-         {
             for ( int i = 0; i < numberOfBuckets; i++)
                buckets[i] = MergeSort(buckets[i]); 
          }
