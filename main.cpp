@@ -53,6 +53,8 @@ void crawlUrl(void *arg) {
     vector<char> buffer(DEFAULT_PAGE_SIZE);
     size_t pageSize;
 
+    std::cout << url.urlName << std::endl;
+
     Crawler::crawl(url, buffer.data(), pageSize);
  
     crawlerResults cResult(url, buffer, pageSize);
@@ -92,7 +94,7 @@ int main() {
     static const int MAX_PAGE_SIZE = 2000000;
     
     
-    string url = "https://www.wikipedia.org/";
+    string url = "google.com";
     
     frontier.insert(url);
     
