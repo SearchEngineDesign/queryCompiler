@@ -18,8 +18,11 @@ static const int NUM_OBJECTS = 1000000; // estimated number of objects for bloom
 
 static const int DEFAULT_PAGE_SIZE = 200000;
 
+static const int NUM_CRAWL_THREADS = 10;
+static const int NUM_PARSER_THREADS = 10;
+static const int MAX_PAGE_SIZE = 2000000;
+
 void parseFunc(void *arg);
-void crawlFunc(void *arg);
 
 struct crawlerResults {
     ParsedUrl url;
@@ -36,15 +39,13 @@ struct crawlerResults {
 
 ThreadSafeFrontier frontier(NUM_OBJECTS, ERROR_RATE);
 ThreadSafeQueue<crawlerResults> crawlResultsQueue;
+// TODO: CHANGE THIS PATH ACCORDINGLY
 IndexWriteHandler indexHandler("/Users/tkmaher/eecs498/SearchEngine/index/chunks");
 
-ThreadPool crawlPool(10);
-ThreadPool parsePool(10);
+ThreadPool crawlPool(NUM_CRAWL_THREADS);
+ThreadPool parsePool(NUM_PARSER_THREADS);
 
 void crawlUrl(void *arg) {
-    // crawlArg *cArg = (crawlArg *) arg;
-    // char *buffer = cArg->buffer;
-    // size_t pageSize = cArg->pageSize;
 
 
     (void) arg;
@@ -55,12 +56,13 @@ void crawlUrl(void *arg) {
 
     std::cout << url.urlName << std::endl;
 
-    Crawler::crawl(url, buffer.data(), pageSize);
- 
-    crawlerResults cResult(url, buffer, pageSize);
-    crawlResultsQueue.put(cResult);
+    if (!Crawler::crawl(url, buffer.data(), pageSize)) {
+        crawlerResults cResult(url, buffer, pageSize);
+        crawlResultsQueue.put(cResult);
 
-    parsePool.submit(parseFunc, (void*) nullptr);
+        parsePool.submit(parseFunc, (void*) nullptr);
+        parsePool.wake();
+    }
 
     // return (void *) cArg;
 
@@ -79,8 +81,9 @@ void parseFunc(void *arg) {
 
     indexHandler.addDocument(parser);
 
-    if (!parser.links.empty()) {
+    if (!frontier.empty()) {
         crawlPool.submit(crawlUrl, (void*) nullptr);
+        crawlPool.wake();
     }
 
     //pthread_exit( ( void* ) arg );
@@ -88,19 +91,14 @@ void parseFunc(void *arg) {
 
 
 int main() {
-
-    static const int NUM_CRAWL_THREADS = 10;
-    static const int NUM_PARSER_THREADS = 10;
-    static const int MAX_PAGE_SIZE = 2000000;
     
-    
-    string url = "google.com";
+    // TODO: replace with seed list
+    string url = "https://en.wikipedia.org/";
     
     frontier.insert(url);
     
     
     // will run crawlURL and parseFunc 10 times each
-    // will probably want to have them in a different thread pool`
     for (size_t i = 0; i < 10; i++)
     {
         crawlPool.submit(crawlUrl, (void*) nullptr);
