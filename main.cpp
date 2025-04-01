@@ -57,16 +57,13 @@ void crawlUrl(void *arg) {
     std::cout << url.urlName << std::endl;
 
     if (!Crawler::crawl(url, buffer.data(), pageSize)) {
+        //buffer.resize(pageSize, '\0');
         crawlerResults cResult(url, buffer, pageSize);
         crawlResultsQueue.put(cResult);
 
         parsePool.submit(parseFunc, (void*) nullptr);
         parsePool.wake();
     }
-
-    // return (void *) cArg;
-
-    //pthread_exit( arg );
 }
 
 void parseFunc(void *arg) {
@@ -85,28 +82,49 @@ void parseFunc(void *arg) {
         crawlPool.submit(crawlUrl, (void*) nullptr);
         crawlPool.wake();
     }
-
-    //pthread_exit( ( void* ) arg );
 }
 
 
-int main() {
-    
-    // TODO: replace with seed list
+
+//This loop always results in a crash
+void sample() {
     string url = "https://en.wikipedia.org/";
     
     frontier.insert(url);
     
+    while (!frontier.empty()) {
+        ParsedUrl url = ParsedUrl(frontier.getNextURLorWait());
+        vector<char> buffer(DEFAULT_PAGE_SIZE);
+        size_t pageSize;
+
+        std::cout << url.urlName << std::endl;
+
+        if (!Crawler::crawl(url, buffer.data(), pageSize)) {
+            buffer.resize(pageSize, '\0');
+            HtmlParser parser(buffer.data(), pageSize);
+            for (const auto& link : parser.links) {
+                frontier.insert(link.URL);
+            }
+
+            indexHandler.addDocument(parser);
+            
+        }
+    }
+}
+
+int main() {
+    
+    // TODO: replace with seed list (and periodically write frontier to file)
+    string url = "https://en.wikipedia.org/";
+    
+    frontier.insert(url);
     
     // will run crawlURL and parseFunc 10 times each
     for (size_t i = 0; i < 10; i++)
     {
         crawlPool.submit(crawlUrl, (void*) nullptr);
         parsePool.submit(parseFunc, (void*) nullptr);
-    }
-
-    while(true)
-    
+    }    
 
     return 0;
 }
