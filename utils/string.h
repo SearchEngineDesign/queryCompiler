@@ -157,6 +157,15 @@ class string
             return m_size;
          }
 
+      // Capacity
+      // REQUIRES: Nothing
+      // MODIFIES: Nothing
+      // EFFECTS: Returns the string's capacity
+      size_t capacity( ) const
+         {
+            return m_capacity;
+         }
+
       // empty
       // REQUIRES: Nothing
       // MODIFIES: Nothing

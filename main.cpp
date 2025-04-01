@@ -5,6 +5,7 @@
 #include "frontier/frontier.h"
 #include "index/index.h"
 
+
 #include "utils/string.h"
 #include "utils/ThreadSafeQueue.h"
 
@@ -12,15 +13,16 @@
 
 #include "threading/ThreadPool.h"
 
-// ! WE MUST FULLY PORT TO OUR STRING AND VECTOR CLASS
-// ! SOME OF THESE IMPORTS ARE INCLUDING THEM
-
 static const float ERROR_RATE = 0.0001; // 0.01% error rate for bloom filter
 static const int NUM_OBJECTS = 1000000; // estimated number of objects for bloom filter
 
 static const int DEFAULT_PAGE_SIZE = 200000;
 
-Crawler crawler;
+static const int NUM_CRAWL_THREADS = 10;
+static const int NUM_PARSER_THREADS = 10;
+static const int MAX_PAGE_SIZE = 2000000;
+
+void parseFunc(void *arg);
 
 struct crawlerResults {
     ParsedUrl url;
@@ -37,11 +39,13 @@ struct crawlerResults {
 
 ThreadSafeFrontier frontier(NUM_OBJECTS, ERROR_RATE);
 ThreadSafeQueue<crawlerResults> crawlResultsQueue;
+// TODO: CHANGE THIS PATH ACCORDINGLY
+IndexWriteHandler indexHandler("/Users/tkmaher/eecs498/SearchEngine/index/chunks");
+
+ThreadPool crawlPool(NUM_CRAWL_THREADS);
+ThreadPool parsePool(NUM_PARSER_THREADS);
 
 void crawlUrl(void *arg) {
-    // crawlArg *cArg = (crawlArg *) arg;
-    // char *buffer = cArg->buffer;
-    // size_t pageSize = cArg->pageSize;
 
 
     (void) arg;
@@ -50,26 +54,19 @@ void crawlUrl(void *arg) {
     vector<char> buffer(DEFAULT_PAGE_SIZE);
     size_t pageSize;
 
-    crawler.crawl(url, buffer.data(), pageSize);
- 
-    crawlerResults cResult(url, buffer, pageSize);
-    crawlResultsQueue.put(cResult);
+    std::cout << url.urlName << std::endl;
 
-    // return (void *) cArg;
+    if (!Crawler::crawl(url, buffer.data(), pageSize)) {
+        //buffer.resize(pageSize, '\0');
+        crawlerResults cResult(url, buffer, pageSize);
+        crawlResultsQueue.put(cResult);
 
-    pthread_exit( arg );
+        parsePool.submit(parseFunc, (void*) nullptr);
+        parsePool.wake();
+    }
 }
 
-struct parserArg {
-    Index* index;
-    char *buffer;
-    size_t pageSize;
-};
-
 void parseFunc(void *arg) {
-    // parserArg* pArg = (parserArg *) arg;
-
-    // (void) arg;
 
     crawlerResults cResult = crawlResultsQueue.get();
 
@@ -79,71 +76,55 @@ void parseFunc(void *arg) {
         frontier.insert(link.URL);
     }
 
-    //TODO: acquire lock for index
-    // pArg->index->addDocument(parser);
+    indexHandler.addDocument(parser);
 
-    pthread_exit( ( void* ) arg );
+    if (!frontier.empty()) {
+        crawlPool.submit(crawlUrl, (void*) nullptr);
+        crawlPool.wake();
+    }
 }
 
 
-int main() {
 
-    static const int NUM_CRAWL_THREADS = 10;
-    static const int NUM_PARSER_THREADS = 10;
-    static const int MAX_PAGE_SIZE = 2000000;
-    
-    
-    // TODO: IMPLEMENT THREAD POOL
-
-    // !WARN IDK IF YOU CAN RESIZE THREADS SO MAKE SURETO RESERVE
-    vector<pthread_t> crawl_threads;
-    vector<pthread_t> parse_threads;
-    crawl_threads.reserve(NUM_CRAWL_THREADS);
-    crawl_threads.reserve(NUM_PARSER_THREADS);
-
-
-    ThreadPool threadPool(NUM_CRAWL_THREADS);
-
-    
-    
-    
-    string url = "https://www.google.com";
-    // char buffer[MAX_PAGE_SIZE]; //don't use a buffer! write to a mapped file or other data structure
-    // size_t pageSize;
-    // ParsedUrl purl(url);
+//This loop always results in a crash
+void sample() {
+    string url = "https://en.wikipedia.org/";
     
     frontier.insert(url);
     
+    while (!frontier.empty()) {
+        ParsedUrl url = ParsedUrl(frontier.getNextURLorWait());
+        vector<char> buffer(DEFAULT_PAGE_SIZE);
+        size_t pageSize;
+
+        std::cout << url.urlName << std::endl;
+
+        if (!Crawler::crawl(url, buffer.data(), pageSize)) {
+            buffer.resize(pageSize, '\0');
+            HtmlParser parser(buffer.data(), pageSize);
+            for (const auto& link : parser.links) {
+                frontier.insert(link.URL);
+            }
+
+            indexHandler.addDocument(parser);
+            
+        }
+    }
+}
+
+int main() {
+    
+    // TODO: replace with seed list (and periodically write frontier to file)
+    string url = "https://en.wikipedia.org/";
+    
+    frontier.insert(url);
     
     // will run crawlURL and parseFunc 10 times each
-    // will probably want to have them in a different thread pool`
     for (size_t i = 0; i < 10; i++)
     {
-        threadPool.submit(crawlUrl, (void*) nullptr);
-        threadPool.submit(parseFunc, (void*) nullptr);
-    }
-    
+        crawlPool.submit(crawlUrl, (void*) nullptr);
+        parsePool.submit(parseFunc, (void*) nullptr);
+    }    
 
-    for (size_t i = 0; i < NUM_CRAWL_THREADS; i++)
-    {
-        // const int rc = pthread_create( &crawl_threads[i], NULL, crawlUrl, (void*) nullptr);
-    }
-
-    for (size_t i = 0; i < NUM_PARSER_THREADS; i++)
-    {
-        // const int rc = pthread_create( &parse_threads[i], NULL, parseFunc, (void*) nullptr);
-    }
-    
-
-
-    for (size_t i = 0; i < crawl_threads.size(); i++)
-    {
-        // pthread_join( crawl_threads[i], NULL );
-    }
-    
-    for (size_t i = 0; i < parse_threads.size(); i++)
-    {
-        // pthread_join( parse_threads[i], NULL );
-    }
     return 0;
 }
