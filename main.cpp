@@ -5,7 +5,6 @@
 #include "frontier/frontier.h"
 #include "index/index.h"
 
-
 #include "utils/string.h"
 #include "utils/ThreadSafeQueue.h"
 
@@ -23,6 +22,7 @@ static const int NUM_PARSER_THREADS = 10;
 static const int MAX_PAGE_SIZE = 2000000;
 
 void parseFunc(void *arg);
+
 
 struct crawlerResults {
     ParsedUrl url;
@@ -88,12 +88,39 @@ void parseFunc(void *arg) {
     }
 }
 
+// for testing the readibility of the index chunks
+
+void testBlob() {
+    HtmlParser parser = HtmlParser();
+    for (int i = 0; i < 100; i++)
+        parser.bodyWords.emplace_back(string("body"));
+    for (int i = 0; i < 20; i++)
+        parser.titleWords.emplace_back(string("title"));
+    parser.base = "https://baseURL1";
+    indexHandler.addDocument(parser);
+    indexHandler.index->documents.push_back("https://baseURL2");
+    indexHandler.index->documents.push_back("https://baseURL3");
+    indexHandler.index->DocumentsInIndex += 2;
+
+    Tuple<string, PostingList> *t1 = indexHandler.index->getDict()->Find("body");
+    assert(t1->value.getUseCount() == 100);
+    assert(t1->value.getDocCount() == 1);
+    Tuple<string, PostingList> *t2 = indexHandler.index->getDict()->Find("@title");
+    assert(t2->value.getUseCount() == 20);
+    assert(t2->value.getDocCount() == 1);
+
+    indexHandler.WriteIndex();
+
+    IndexReadHandler::testReader(indexHandler);
+}
+
 int main() {
     
     // TODO: replace with seed list (and periodically write frontier to file)
     string url = "https://en.wikipedia.org/";
     
     frontier.insert(url);
+
     
     // will run crawlURL and parseFunc 10 times each
     for (size_t i = 0; i < 10; i++)

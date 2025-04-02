@@ -240,14 +240,16 @@ class string
       
       string operator+( const string &other )
          {
-            operator+=(other);
-            return *this;
+            string s(*this);
+            s += other;
+            return s;
          }
       
       string operator+( const char *other )
          {
-            operator+=(string(other));
-            return *this;
+            string s(*this);
+            s += string(other);
+            return s;
          }
 
       // Push Back
