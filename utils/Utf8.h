@@ -111,10 +111,10 @@ Utf8 *WriteUtf8( Utf8 *p, Unicode c );
 
 
 // length of c (size_t) in utf8
-size_t SizeOfCustomUtf8( size_t c );
+size_t SizeOfCustomUtf8( const size_t &c );
 
 // write c into Utf8
-void WriteCustomUtf8( Utf8 *p, size_t c );
+void WriteCustomUtf8( Utf8 *p, const size_t &c, const size_t &length );
 
 // get value from utf8
 size_t GetCustomUtf8( const Utf8 *p );
