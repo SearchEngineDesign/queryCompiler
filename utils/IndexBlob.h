@@ -52,33 +52,25 @@ struct SerialPost
 struct SerialString
    {
    public:
-      size_t size, capacity;
+      uint8_t delimiter = 0;
       char data[ Unknown ];
 
       static size_t BytesRequired(const string &str) 
          {
-            // for size and capacity
-            size_t size = sizeof(size_t) << 1;
             // for chars
-            size += str.size() * sizeof(char);
+            size_t size = (str.size() * sizeof(char)) + sizeof(uint8_t);
 
             return RoundUp(size, sizeof(size_t));
          }
 
       static char *Write( char *buffer, const string *str ) {
             SerialString* t = reinterpret_cast<SerialString*>(buffer);
-            t->size = str->size();
-            t->capacity = str->capacity();
             for ( size_t i = 0; i < str->size(); i++ )
                t->data[i] = *(str->at(i));
          }
 
       const char *c_str() const {
          return data;
-      }
-
-      const size_t getSize() {
-         return size;
       }
 
    };
@@ -242,7 +234,7 @@ struct SerialTuple
          return size;
       }
 
-      const SerialString* Key() {
+      const SerialString* Key() const {
          return reinterpret_cast<SerialString*>((char *)this + (sizeof(size_t) << 1));
       }
 
@@ -263,10 +255,8 @@ class IndexBlob
          DocumentsInIndex, // mv of index
          keyCount, // mv of dict
          NumberOfBuckets; // mv of dict
-         
-      size_t Buckets[ Unknown ]; // arr of byte offsets to tuples in dict
 
-      size_t Documents[ Unknown ]; // arr of byte offsets to documents in document table
+      size_t offsets[ Unknown + Unknown ]; // arr of byte offsets to documents and buckets
 
 
       // Returns the bucket in dict with token == key.
@@ -278,12 +268,12 @@ class IndexBlob
          // return nullptr.
 
          // Your code here.
-         size_t i = Hash::hashbasic(key, NumberOfBuckets);
-         size_t bucketStart = Buckets[i];
+         size_t i = Hash::hashbasic(key, NumberOfBuckets) + DocumentsInIndex;
+         size_t bucketStart = offsets[i];
          SerialTuple *curr = reinterpret_cast<SerialTuple*>((char *)this + bucketStart);
 
          size_t bucketEnd;
-         (i == NumberOfBuckets - 1) ? bucketEnd = BlobSize : bucketEnd = Buckets[i+1];
+         (i == NumberOfBuckets - 1) ? bucketEnd = BlobSize : bucketEnd = offsets[i+1];
 
          while (bucketStart < bucketEnd)
          {
@@ -305,7 +295,7 @@ class IndexBlob
       const SerialString *getDocument( size_t i ) {
          if (DocumentsInIndex <= i)
             return nullptr;
-         return reinterpret_cast<SerialString*>((char *)this + Documents[i]);
+         return reinterpret_cast<SerialString*>((char *)this + offsets[i]);
       }
 
       static size_t BytesRequired( const Hash *hashTable )
@@ -371,18 +361,17 @@ class IndexBlob
          // writing the document vector
          for (int i = 0; i < documents->size(); i++)
          {
-            blob->Documents[i] = offset;
+            blob->offsets[i] = offset;
             const string * curr = &(documents->operator[](i));
-            size_t sSize = curr->size();
+            size_t sSize = SerialString::BytesRequired(*curr);
             SerialString::Write(mem + offset, curr);
             offset += sSize;
             offset = RoundUp(offset, sizeof(size_t));
          }
-         blob->getDocument(0);
 
          for (int i = 0; i < hashTable->size(); i++)
          {
-            blob->Buckets[i] = offset;
+            blob->offsets[i + blob->DocumentsInIndex] = offset;
             HashBucket *curr = hashTable->at(i);
             
             // writing the buckets
@@ -395,7 +384,7 @@ class IndexBlob
             }
             
          }
-         
+                  
          return blob;
          }
 
