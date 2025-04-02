@@ -31,8 +31,11 @@ struct crawlerResults {
 
     crawlerResults() : url(""), buffer(), pageSize(0) {}
 
-    crawlerResults(const ParsedUrl& u, const vector<char>& v, size_t p) 
-        : url(u), buffer(v), pageSize(p) {}
+    crawlerResults(const ParsedUrl& u, const char * v, size_t p) 
+        : url(u), pageSize(p) {
+            for (int i = 0; i < p; ++i)
+                buffer.push_back(v[i]);
+        }
 
 };
 
@@ -51,19 +54,20 @@ void crawlUrl(void *arg) {
     (void) arg;
 
     ParsedUrl url = ParsedUrl(frontier.getNextURLorWait());
-    vector<char> buffer(DEFAULT_PAGE_SIZE);
+    char * buffer = new char[MAX_PAGE_SIZE];
     size_t pageSize;
 
     std::cout << url.urlName << std::endl;
 
-    if (!Crawler::crawl(url, buffer.data(), pageSize)) {
-        //buffer.resize(pageSize, '\0');
+    if (!Crawler::crawl(url, buffer, pageSize)) {
         crawlerResults cResult(url, buffer, pageSize);
         crawlResultsQueue.put(cResult);
 
         parsePool.submit(parseFunc, (void*) nullptr);
         parsePool.wake();
     }
+
+    delete[] buffer;
 }
 
 void parseFunc(void *arg) {
@@ -81,34 +85,6 @@ void parseFunc(void *arg) {
     if (!frontier.empty()) {
         crawlPool.submit(crawlUrl, (void*) nullptr);
         crawlPool.wake();
-    }
-}
-
-
-
-//This loop always results in a crash
-void sample() {
-    string url = "https://en.wikipedia.org/";
-    
-    frontier.insert(url);
-    
-    while (!frontier.empty()) {
-        ParsedUrl url = ParsedUrl(frontier.getNextURLorWait());
-        vector<char> buffer(DEFAULT_PAGE_SIZE);
-        size_t pageSize;
-
-        std::cout << url.urlName << std::endl;
-
-        if (!Crawler::crawl(url, buffer.data(), pageSize)) {
-            buffer.resize(pageSize, '\0');
-            HtmlParser parser(buffer.data(), pageSize);
-            for (const auto& link : parser.links) {
-                frontier.insert(link.URL);
-            }
-
-            indexHandler.addDocument(parser);
-            
-        }
     }
 }
 
