@@ -138,7 +138,7 @@ Utf8 *WriteUtf8( Utf8 *p, Unicode c )
 // length of c (size_t) in utf8
 size_t SizeOfCustomUtf8( const size_t &c )
    {
-   if ( c <= 0x3F )
+   if ( c <= 0x7F )
       return 1;  
    else if ( c <= 0x7FF )
       return 2;  
@@ -162,7 +162,7 @@ void WriteCustomUtf8( Utf8 *p, const size_t &c, const size_t &length )
       throw std::invalid_argument("Invalid utf8");  
 
    // set first byte
-   static const uint8_t masks[] = { 0x80, 0xC0, 0xE0, 0xF0, 0xF8, 0xFC };
+   static const uint8_t masks[] = { 0x00, 0xC0, 0xE0, 0xF0, 0xF8, 0xFC };
    *p = ( c >> ( 6 * ( length - 1 ) ) ) | masks[ length - 1 ];
 
    // set continuation bytes
