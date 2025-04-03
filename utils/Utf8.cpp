@@ -136,7 +136,7 @@ Utf8 *WriteUtf8( Utf8 *p, Unicode c )
 // Not part of hw
 
 // length of c (size_t) in utf8
-size_t SizeOfCustomUtf8( size_t c )
+size_t SizeOfCustomUtf8( const size_t &c )
    {
    if ( c <= 0x7F )
       return 1;  
@@ -155,10 +155,8 @@ size_t SizeOfCustomUtf8( size_t c )
    }
 
 // write c into Utf8
-void WriteCustomUtf8( Utf8 *p, size_t c )
+void WriteCustomUtf8( Utf8 *p, const size_t &c, const size_t &length )
    {
-   // length of utf8
-   size_t length = SizeOfCustomUtf8( c ); 
 
    if( length == 0 || length > 6 )
       throw std::invalid_argument("Invalid utf8");  
