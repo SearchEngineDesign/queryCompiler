@@ -10,7 +10,7 @@
 #include <cstdint>
 #include <algorithm>
 
-static const size_t initialSize = 2048;
+static const size_t initialSize = 4096;
 
 // You may add additional members or helper functions.
 

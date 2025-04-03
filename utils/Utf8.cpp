@@ -138,7 +138,7 @@ Utf8 *WriteUtf8( Utf8 *p, Unicode c )
 // length of c (size_t) in utf8
 size_t SizeOfCustomUtf8( const size_t &c )
    {
-   if ( c <= 0x7F )
+   if ( c <= 0x3F )
       return 1;  
    else if ( c <= 0x7FF )
       return 2;  

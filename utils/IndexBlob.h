@@ -152,15 +152,14 @@ struct SerialPostingList
             offset += (sizeof(size_t)) * p->getSeekIndex();
             offset += (sizeof(size_t)) * listIn.size();
 
-            const std::pair<size_t, size_t> *seekTable = p->getSeekTable();
+            const vector<std::pair<size_t, size_t>> *seekTable = p->getSeekTable();
             size_t increment = sizeof(size_t) << 1;
             for (int i = 0; i < p->getSeekIndex(); i++) {
-               memcpy(buffer + offset, &(seekTable[i]), increment);
+               memcpy(buffer + offset, &(seekTable->operator[](i)), increment);
                t->offsets[i] = offset;
                offset += increment;
             }
 
-            offset = RoundUp(offset, sizeof(size_t));
             uint8_t postSize = 0;
             Post post;
 
@@ -206,6 +205,8 @@ struct SerialTuple
 
             // string key
             size += SerialString::BytesRequired(b->tuple.key);
+
+            size = RoundUp(size, sizeof(size_t));
 
             // PL value
             size += SerialPostingList::BytesRequired(&(b->tuple.value));
