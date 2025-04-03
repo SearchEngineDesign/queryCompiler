@@ -89,7 +89,6 @@ void parseFunc(void *arg) {
 }
 
 // for testing the readibility of the index chunks
-
 void testBlob() {
     HtmlParser parser = HtmlParser();
     for (int i = 0; i < 100; i++)

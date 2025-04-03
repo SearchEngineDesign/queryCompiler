@@ -97,29 +97,31 @@ struct SerialPostingList
    {
    public:
 
-      size_t lastPos, lastDoc, documentCount, posts;
+      size_t documentCount, posts;
       char type;
       uint8_t seekIndex;
-      std::pair<size_t, size_t> SeekTable[ Unknown ];
-
-      // byte offsets of each individual post 
-      size_t list[ Unknown ];
+      // byte offsets to seek pairs + each individual post 
+      size_t offsets[ Unknown + Unknown ];
 
       static size_t BytesRequired(const PostingList * p) 
          {
             vector<Post> list = *(p->getList());
 
             size_t size = 0;
-            // the 4 size_t member variables
-            size += sizeof(size_t) << 2;
+            // the 2 size_t member variables
+            size += sizeof(size_t) << 1;
             // token type
             size += sizeof(char);
             // the uint8_t member variable -- seek index
             size += sizeof(uint8_t);
-            // the seek list
-            size += (sizeof(size_t) << 1) * p->getSeekIndex();
+            size = RoundUp(size, sizeof(size_t));
+            // the list of seek offsets
+            size += sizeof(size_t) * p->getSeekIndex();
             // list of post offsets
             size += sizeof(size_t) * list.size();
+
+            // seek list size
+            size += (sizeof(size_t) << 1) * p->getSeekIndex();
 
             // post vector size
             for (int i = 0; i < list.size(); i++) {
@@ -137,22 +139,24 @@ struct SerialPostingList
             SerialPostingList* t = reinterpret_cast<SerialPostingList*>(buffer);
             vector<Post> listIn = *(p->getList());
 
-            t->lastPos = p->lastPos;
-            t->lastDoc = p->lastDoc;
             t->documentCount = p->getDocCount();
             t->posts = listIn.size();
             t->type = p->getType();
 
             t->seekIndex = p->getSeekIndex();
 
-            offset += sizeof(size_t) * 5;
+            offset += sizeof(size_t) << 1;
             offset += sizeof(char);
+            offset += sizeof(uint8_t);
             offset = RoundUp(offset, sizeof(size_t));
+            offset += (sizeof(size_t)) * p->getSeekIndex();
+            offset += (sizeof(size_t)) * listIn.size();
 
             const std::pair<size_t, size_t> *seekTable = p->getSeekTable();
             size_t increment = sizeof(size_t) << 1;
             for (int i = 0; i < p->getSeekIndex(); i++) {
                memcpy(buffer + offset, &(seekTable[i]), increment);
+               t->offsets[i] = offset;
                offset += increment;
             }
 
@@ -163,7 +167,7 @@ struct SerialPostingList
             for (int i = 0; i < listIn.size(); i++) {
                postSize = listIn[i].length();
                memcpy(buffer + offset, listIn[i].getData(), postSize);
-               t->list[i] = offset;
+               t->offsets[i + t->seekIndex] = offset;
                offset += postSize;
             }
                
@@ -172,7 +176,13 @@ struct SerialPostingList
          const SerialPost *getPost( size_t i ) const {
             if (i >= posts)
                return nullptr;
-            return reinterpret_cast<SerialPost*>((char*)this + list[i]);
+            return reinterpret_cast<SerialPost*>((char*)this + offsets[i + seekIndex]);
+         }
+
+         const std::pair<size_t, size_t> *getSeekPair( size_t i ) const {
+            if (i >= seekIndex)
+               return nullptr;
+            return reinterpret_cast<std::pair<size_t, size_t>*>((char*)this + offsets[i]);
          }
    };
 
