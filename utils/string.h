@@ -483,6 +483,10 @@ class string
          return result;
       }
 
+      char * data() const{
+         return m_data;
+      }
+
    private:
       size_t m_size;
       size_t m_capacity;

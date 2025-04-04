@@ -1,4 +1,4 @@
-#include "crawler/crawler.h"
+#include "Crawler/crawler.h"
 #include "parser/HtmlParser.h"
 #include <pthread.h>
 #include "utils/vector.h"
@@ -40,49 +40,49 @@ struct crawlerResults {
 ThreadSafeFrontier frontier(NUM_OBJECTS, ERROR_RATE);
 ThreadSafeQueue<crawlerResults> crawlResultsQueue;
 // TODO: CHANGE THIS PATH ACCORDINGLY
-IndexWriteHandler indexHandler("/Users/tkmaher/eecs498/SearchEngine/index/chunks");
+// IndexWriteHandler indexHandler("/Users/tkmaher/eecs498/SearchEngine/index/chunks");
 
-ThreadPool crawlPool(NUM_CRAWL_THREADS);
-ThreadPool parsePool(NUM_PARSER_THREADS);
+// ThreadPool crawlPool(NUM_CRAWL_THREADS);
+// ThreadPool parsePool(NUM_PARSER_THREADS);
 
-void crawlUrl(void *arg) {
+// void crawlUrl(void *arg) {
 
 
-    (void) arg;
+//     (void) arg;
 
-    ParsedUrl url = ParsedUrl(frontier.getNextURLorWait());
-    vector<char> buffer(DEFAULT_PAGE_SIZE);
-    size_t pageSize;
+//     ParsedUrl url = ParsedUrl(frontier.getNextURLorWait());
+//     vector<char> buffer(DEFAULT_PAGE_SIZE);
+//     size_t pageSize;
 
-    std::cout << url.urlName << std::endl;
+//     std::cout << url.urlName << std::endl;
 
-    if (!Crawler::crawl(url, buffer.data(), pageSize)) {
-        //buffer.resize(pageSize, '\0');
-        crawlerResults cResult(url, buffer, pageSize);
-        crawlResultsQueue.put(cResult);
+//     if (!Crawler::crawl(url, buffer.data(), pageSize)) {
+//         //buffer.resize(pageSize, '\0');
+//         crawlerResults cResult(url, buffer, pageSize);
+//         crawlResultsQueue.put(cResult);
 
-        parsePool.submit(parseFunc, (void*) nullptr);
-        parsePool.wake();
-    }
-}
+//         parsePool.submit(parseFunc, (void*) nullptr);
+//         parsePool.wake();
+//     }
+// }
 
-void parseFunc(void *arg) {
+// void parseFunc(void *arg) {
 
-    crawlerResults cResult = crawlResultsQueue.get();
+//     crawlerResults cResult = crawlResultsQueue.get();
 
-    HtmlParser parser(cResult.buffer.data(), cResult.pageSize);
+//     HtmlParser parser(cResult.buffer.data(), cResult.pageSize);
 
-    for (const auto& link : parser.links) {
-        frontier.insert(link.URL);
-    }
+//     for (const auto& link : parser.links) {
+//         frontier.insert(link.URL);
+//     }
 
-    indexHandler.addDocument(parser);
+//     indexHandler.addDocument(parser);
 
-    if (!frontier.empty()) {
-        crawlPool.submit(crawlUrl, (void*) nullptr);
-        crawlPool.wake();
-    }
-}
+//     if (!frontier.empty()) {
+//         crawlPool.submit(crawlUrl, (void*) nullptr);
+//         crawlPool.wake();
+//     }
+// }
 
 
 
@@ -106,7 +106,7 @@ void sample() {
                 frontier.insert(link.URL);
             }
 
-            indexHandler.addDocument(parser);
+            // indexHandler.addDocument(parser);
             
         }
     }
@@ -118,13 +118,15 @@ int main() {
     string url = "https://en.wikipedia.org/";
     
     frontier.insert(url);
-    
-    // will run crawlURL and parseFunc 10 times each
-    for (size_t i = 0; i < 10; i++)
-    {
-        crawlPool.submit(crawlUrl, (void*) nullptr);
-        parsePool.submit(parseFunc, (void*) nullptr);
-    }    
+   
+    sample();
+
+    // // will run crawlURL and parseFunc 10 times each
+    // for (size_t i = 0; i < 10; i++)
+    // {
+    //     crawlPool.submit(crawlUrl, (void*) nullptr);
+    //     parsePool.submit(parseFunc, (void*) nullptr);
+    // }    
 
     return 0;
 }
