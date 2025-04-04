@@ -18,4 +18,4 @@ search: main.cpp parser/HtmlParser.cpp parser/HtmlTags.cpp Crawler/crawler.cpp u
 .PHONY: clean
 
 clean:
-	rm -f search 
+	rm -f search ./log/chunks/*

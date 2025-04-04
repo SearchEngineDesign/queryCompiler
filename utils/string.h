@@ -240,14 +240,16 @@ class string
       
       string operator+( const string &other )
          {
-            operator+=(other);
-            return *this;
+            string s(*this);
+            s += other;
+            return s;
          }
       
       string operator+( const char *other )
          {
-            operator+=(string(other));
-            return *this;
+            string s(*this);
+            s += string(other);
+            return s;
          }
 
       // Push Back
@@ -456,6 +458,8 @@ class string
          return string(m_data + pos, count);
       }
 
+
+      // Returns all data after pos
       string substr(size_t pos) const {
          if (pos > m_size) {
             return string();

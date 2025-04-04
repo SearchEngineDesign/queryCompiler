@@ -31,7 +31,8 @@ size_t IndicatedLength( const Utf8 *p )
       return 5;  
    else if ( ( *p & 0xFE ) == 0xFC )
       return 6;  
-   return 1;  
+   else
+      throw std::runtime_error("data less than 7 bytes!");;
    }
 
 Unicode GetUtf8( const Utf8 *p ) {
@@ -136,7 +137,7 @@ Utf8 *WriteUtf8( Utf8 *p, Unicode c )
 // Not part of hw
 
 // length of c (size_t) in utf8
-size_t SizeOfCustomUtf8( size_t c )
+size_t SizeOfCustomUtf8( const size_t &c )
    {
    if ( c <= 0x7F )
       return 1;  
@@ -155,10 +156,8 @@ size_t SizeOfCustomUtf8( size_t c )
    }
 
 // write c into Utf8
-void WriteCustomUtf8( Utf8 *p, size_t c )
+void WriteCustomUtf8( Utf8 *p, const size_t &c, const size_t &length )
    {
-   // length of utf8
-   size_t length = SizeOfCustomUtf8( c ); 
 
    if( length == 0 || length > 6 )
       throw std::invalid_argument("Invalid utf8");  
@@ -168,17 +167,31 @@ void WriteCustomUtf8( Utf8 *p, size_t c )
    *p = ( c >> ( 6 * ( length - 1 ) ) ) | masks[ length - 1 ];
 
    // set continuation bytes
-   for ( int i = 1; i < length; i ++ )
-      *( p + i ) = ( ( c >> ( 6 * ( length - i - 1 ) ) ) & 0x3F ) | 0x80;  
+   if ( length == 1 )
+      *p = c;  
+   else {
+      for ( int i = 1; i < length; i ++ )
+         *( p + i ) = ( ( c >> ( 6 * ( length - i - 1 ) ) ) & 0x3F ) | 0x80;  
+   }
 
    }
 
 // get value from utf8
 size_t GetCustomUtf8( const Utf8 *p ) {
-   size_t indicatedLength = IndicatedLength(p);  
+
+   size_t indicatedLength;
+  
+   try {
+      indicatedLength = IndicatedLength(p); 
+   } catch (const std::runtime_error& e) {
+      std::cout << "Caught an exception: " << e.what() << std::endl;
+   }
 
    if( indicatedLength == 0 || indicatedLength > 6 )
-      throw std::invalid_argument("Invalid utf8");  
+     throw std::invalid_argument("Invalid utf8");
+
+   if ( indicatedLength == 1 )
+      return *p;
 
    size_t result = 0;
 
