@@ -1,5 +1,6 @@
-#include "Crawler/crawler.h"
+#include "crawler/crawler.h"
 #include "parser/HtmlParser.h"
+#include <cstddef>
 #include <pthread.h>
 #include "utils/vector.h"
 #include "frontier/frontier.h"
@@ -40,44 +41,20 @@ struct crawlerResults {
 
 ThreadSafeFrontier frontier(NUM_OBJECTS, ERROR_RATE);
 ThreadSafeQueue<crawlerResults> crawlResultsQueue;
-<<<<<<< HEAD
 // TODO: CHANGE THIS PATH ACCORDINGLY
-// IndexWriteHandler indexHandler("/Users/tkmaher/eecs498/SearchEngine/index/chunks");
-=======
-IndexWriteHandler indexHandler("/Users/tkmaher/eecs498/SearchEngine/log/chunks");
->>>>>>> 9f5bcba1809d780178a2ddaf119046da8f24d46a
+IndexWriteHandler indexHandler("TODO");
 
-// ThreadPool crawlPool(NUM_CRAWL_THREADS);
-// ThreadPool parsePool(NUM_PARSER_THREADS);
+ThreadPool crawlPool(NUM_CRAWL_THREADS);
+ThreadPool parsePool(NUM_PARSER_THREADS);
 
-// void crawlUrl(void *arg) {
+void crawlUrl(void *arg) {
 
-<<<<<<< HEAD
-
-//     (void) arg;
-
-//     ParsedUrl url = ParsedUrl(frontier.getNextURLorWait());
-//     vector<char> buffer(DEFAULT_PAGE_SIZE);
-//     size_t pageSize;
-=======
     ParsedUrl url = ParsedUrl(frontier.getNextURLorWait());
     char * buffer = new char[MAX_PAGE_SIZE];
     size_t pageSize;
->>>>>>> 9f5bcba1809d780178a2ddaf119046da8f24d46a
 
-//     std::cout << url.urlName << std::endl;
+    std::cout << url.urlName << std::endl;
 
-<<<<<<< HEAD
-//     if (!Crawler::crawl(url, buffer.data(), pageSize)) {
-//         //buffer.resize(pageSize, '\0');
-//         crawlerResults cResult(url, buffer, pageSize);
-//         crawlResultsQueue.put(cResult);
-
-//         parsePool.submit(parseFunc, (void*) nullptr);
-//         parsePool.wake();
-//     }
-// }
-=======
     if (!Crawler::crawl(url, buffer, pageSize)) {
         crawlerResults cResult(url, buffer, pageSize);
         crawlResultsQueue.put(cResult);
@@ -88,92 +65,63 @@ IndexWriteHandler indexHandler("/Users/tkmaher/eecs498/SearchEngine/log/chunks")
 
     delete[] buffer;
 }
->>>>>>> 9f5bcba1809d780178a2ddaf119046da8f24d46a
 
-// void parseFunc(void *arg) {
+void parseFunc(void *arg) {
 
-//     crawlerResults cResult = crawlResultsQueue.get();
+    crawlerResults cResult = crawlResultsQueue.get();
 
-//     HtmlParser parser(cResult.buffer.data(), cResult.pageSize);
+    HtmlParser parser(cResult.buffer.data(), cResult.pageSize);
 
-//     for (const auto& link : parser.links) {
-//         frontier.insert(link.URL);
-//     }
+    for (const auto &link : parser.links) {
+        frontier.insert(link.URL);
+    }
 
-//     indexHandler.addDocument(parser);
+    indexHandler.addDocument(parser);
 
-//     if (!frontier.empty()) {
-//         crawlPool.submit(crawlUrl, (void*) nullptr);
-//         crawlPool.wake();
-//     }
-// }
+    if (!frontier.empty()) {
+        crawlPool.submit(crawlUrl, (void*) nullptr);
+        crawlPool.wake();
+    }
+}
 
 // for testing the readibility of the index chunks
 
-void testBlob() {
-    HtmlParser parser = HtmlParser();
-    for (int i = 0; i < 100; i++)
-        parser.bodyWords.emplace_back(string("body"));
-    for (int i = 0; i < 20; i++)
-        parser.titleWords.emplace_back(string("title"));
-    parser.base = "https://baseURL1";
-    indexHandler.addDocument(parser);
-    indexHandler.index->documents.push_back("https://baseURL2");
-    indexHandler.index->documents.push_back("https://baseURL3");
-    indexHandler.index->DocumentsInIndex += 2;
+// void testBlob() {
+//     HtmlParser parser = HtmlParser();
+//     for (int i = 0; i < 100; i++)
+//         parser.bodyWords.emplace_back(string("body"));
+//     for (int i = 0; i < 20; i++)
+//         parser.titleWords.emplace_back(string("title"));
+//     parser.base = "https://baseURL1";
+//     indexHandler.addDocument(parser);
+//     indexHandler.index->documents.push_back("https://baseURL2");
+//     indexHandler.index->documents.push_back("https://baseURL3");
+//     indexHandler.index->DocumentsInIndex += 2;
 
-    Tuple<string, PostingList> *t1 = indexHandler.index->getDict()->Find("body");
-    assert(t1->value.getUseCount() == 100);
-    assert(t1->value.getDocCount() == 1);
-    Tuple<string, PostingList> *t2 = indexHandler.index->getDict()->Find("@title");
-    assert(t2->value.getUseCount() == 20);
-    assert(t2->value.getDocCount() == 1);
+//     Tuple<string, PostingList> *t1 = indexHandler.index->getDict()->Find("body");
+//     assert(t1->value.getUseCount() == 100);
+//     assert(t1->value.getDocCount() == 1);
+//     Tuple<string, PostingList> *t2 = indexHandler.index->getDict()->Find("@title");
+//     assert(t2->value.getUseCount() == 20);
+//     assert(t2->value.getDocCount() == 1);
 
-    indexHandler.WriteIndex();
+//     indexHandler.WriteIndex();
 
-<<<<<<< HEAD
-        if (!Crawler::crawl(url, buffer.data(), pageSize)) {
-            buffer.resize(pageSize, '\0');
-            HtmlParser parser(buffer.data(), pageSize);
-            for (const auto& link : parser.links) {
-                frontier.insert(link.URL);
-            }
-
-            // indexHandler.addDocument(parser);
-            
-        }
-    }
-=======
-    IndexReadHandler::testReader(indexHandler);
->>>>>>> 9f5bcba1809d780178a2ddaf119046da8f24d46a
-}
+//     IndexReadHandler::testReader(indexHandler);
+// }
 
 int main() {
-    
-<<<<<<< HEAD
-    // TODO: replace with seed list (and periodically write frontier to file)
+    //TODO: change back
+   //  frontier.buildFrontier("/Users/tkmaher/eecs498/SearchEngine/log/seedlist.txt");
     string url = "https://en.wikipedia.org/";
-    
     frontier.insert(url);
-   
-    sample();
 
-    // // will run crawlURL and parseFunc 10 times each
-    // for (size_t i = 0; i < 10; i++)
-    // {
-    //     crawlPool.submit(crawlUrl, (void*) nullptr);
-    //     parsePool.submit(parseFunc, (void*) nullptr);
-    // }    
-=======
-    frontier.buildFrontier("/Users/tkmaher/eecs498/SearchEngine/log/seedlist.txt");
-    
     // will run crawlURL and parseFunc 10 times each
     for (size_t i = 0; i < 10; i++)
     {
         crawlPool.submit(crawlUrl, (void*) nullptr);
         parsePool.submit(parseFunc, (void*) nullptr);
     }    
->>>>>>> 9f5bcba1809d780178a2ddaf119046da8f24d46a
 
     return 0;
 }
