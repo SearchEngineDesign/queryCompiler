@@ -17,12 +17,11 @@ static const int NUM_OBJECTS = 1000000; // estimated number of objects for bloom
 
 static const int DEFAULT_PAGE_SIZE = 200000;
 
-static const int NUM_CRAWL_THREADS = 10;
-static const int NUM_PARSER_THREADS = 10;
+static const int NUM_CRAWL_THREADS = 15;
+static const int NUM_PARSER_THREADS = 5;
 static const int MAX_PAGE_SIZE = 2000000;
 
 void parseFunc(void *arg);
-
 
 struct crawlerResults {
     ParsedUrl url;
@@ -39,19 +38,14 @@ struct crawlerResults {
 
 };
 
-
 ThreadSafeFrontier frontier(NUM_OBJECTS, ERROR_RATE);
 ThreadSafeQueue<crawlerResults> crawlResultsQueue;
-// TODO: CHANGE THIS PATH ACCORDINGLY
-IndexWriteHandler indexHandler("/Users/tkmaher/eecs498/SearchEngine/index/chunks");
+IndexWriteHandler indexHandler("/Users/tkmaher/eecs498/SearchEngine/log/chunks");
 
 ThreadPool crawlPool(NUM_CRAWL_THREADS);
 ThreadPool parsePool(NUM_PARSER_THREADS);
 
 void crawlUrl(void *arg) {
-
-
-    (void) arg;
 
     ParsedUrl url = ParsedUrl(frontier.getNextURLorWait());
     char * buffer = new char[MAX_PAGE_SIZE];
@@ -116,11 +110,7 @@ void testBlob() {
 
 int main() {
     
-    // TODO: replace with seed list (and periodically write frontier to file)
-    string url = "https://en.wikipedia.org/";
-    
-    frontier.insert(url);
-
+    frontier.buildFrontier("/Users/tkmaher/eecs498/SearchEngine/log/seedlist.txt");
     
     // will run crawlURL and parseFunc 10 times each
     for (size_t i = 0; i < 10; i++)

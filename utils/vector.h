@@ -18,6 +18,8 @@ template<typename T>
       vector( )
          {
 		      reset();
+
+            arr = new T[0];
          }
 
       // Destructor

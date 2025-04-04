@@ -85,7 +85,7 @@ struct SerialDocumentVector
             size_t size = 0;
             // for each post
             for (auto &i : *vec) {
-               size += i.size();
+               size += SerialString::BytesRequired(i);
             }
             
             return RoundUp(size, sizeof(size_t));
@@ -403,9 +403,9 @@ class IndexBlob
 
       // Discard
 
-      static void Discard( IndexBlob *blob )
+      static void Discard( const IndexBlob *blob )
          {
-         delete blob;
+         delete[] blob;
          }
    };
 

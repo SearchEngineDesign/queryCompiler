@@ -458,6 +458,8 @@ class string
          return string(m_data + pos, count);
       }
 
+
+      // Returns all data after pos
       string substr(size_t pos) const {
          if (pos > m_size) {
             return string();
