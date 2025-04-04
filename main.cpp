@@ -40,44 +40,20 @@ struct crawlerResults {
 
 ThreadSafeFrontier frontier(NUM_OBJECTS, ERROR_RATE);
 ThreadSafeQueue<crawlerResults> crawlResultsQueue;
-<<<<<<< HEAD
-// TODO: CHANGE THIS PATH ACCORDINGLY
-// IndexWriteHandler indexHandler("/Users/tkmaher/eecs498/SearchEngine/index/chunks");
-=======
+// !STOP USING PATHS RELATIVE TO YOUR COMPUTER
 IndexWriteHandler indexHandler("/Users/tkmaher/eecs498/SearchEngine/log/chunks");
->>>>>>> 9f5bcba1809d780178a2ddaf119046da8f24d46a
 
 // ThreadPool crawlPool(NUM_CRAWL_THREADS);
 // ThreadPool parsePool(NUM_PARSER_THREADS);
 
 // void crawlUrl(void *arg) {
 
-<<<<<<< HEAD
-
-//     (void) arg;
-
-//     ParsedUrl url = ParsedUrl(frontier.getNextURLorWait());
-//     vector<char> buffer(DEFAULT_PAGE_SIZE);
-//     size_t pageSize;
-=======
     ParsedUrl url = ParsedUrl(frontier.getNextURLorWait());
     char * buffer = new char[MAX_PAGE_SIZE];
     size_t pageSize;
->>>>>>> 9f5bcba1809d780178a2ddaf119046da8f24d46a
 
 //     std::cout << url.urlName << std::endl;
 
-<<<<<<< HEAD
-//     if (!Crawler::crawl(url, buffer.data(), pageSize)) {
-//         //buffer.resize(pageSize, '\0');
-//         crawlerResults cResult(url, buffer, pageSize);
-//         crawlResultsQueue.put(cResult);
-
-//         parsePool.submit(parseFunc, (void*) nullptr);
-//         parsePool.wake();
-//     }
-// }
-=======
     if (!Crawler::crawl(url, buffer, pageSize)) {
         crawlerResults cResult(url, buffer, pageSize);
         crawlResultsQueue.put(cResult);
@@ -88,7 +64,6 @@ IndexWriteHandler indexHandler("/Users/tkmaher/eecs498/SearchEngine/log/chunks")
 
     delete[] buffer;
 }
->>>>>>> 9f5bcba1809d780178a2ddaf119046da8f24d46a
 
 // void parseFunc(void *arg) {
 
@@ -131,40 +106,12 @@ void testBlob() {
 
     indexHandler.WriteIndex();
 
-<<<<<<< HEAD
-        if (!Crawler::crawl(url, buffer.data(), pageSize)) {
-            buffer.resize(pageSize, '\0');
-            HtmlParser parser(buffer.data(), pageSize);
-            for (const auto& link : parser.links) {
-                frontier.insert(link.URL);
-            }
-
-            // indexHandler.addDocument(parser);
-            
-        }
-    }
-=======
     IndexReadHandler::testReader(indexHandler);
->>>>>>> 9f5bcba1809d780178a2ddaf119046da8f24d46a
 }
 
 int main() {
     
-<<<<<<< HEAD
-    // TODO: replace with seed list (and periodically write frontier to file)
-    string url = "https://en.wikipedia.org/";
-    
-    frontier.insert(url);
-   
-    sample();
-
-    // // will run crawlURL and parseFunc 10 times each
-    // for (size_t i = 0; i < 10; i++)
-    // {
-    //     crawlPool.submit(crawlUrl, (void*) nullptr);
-    //     parsePool.submit(parseFunc, (void*) nullptr);
-    // }    
-=======
+    // !STOP USING PATHS RELATIVE TO YOUR COMPUTER
     frontier.buildFrontier("/Users/tkmaher/eecs498/SearchEngine/log/seedlist.txt");
     
     // will run crawlURL and parseFunc 10 times each
@@ -173,7 +120,6 @@ int main() {
         crawlPool.submit(crawlUrl, (void*) nullptr);
         parsePool.submit(parseFunc, (void*) nullptr);
     }    
->>>>>>> 9f5bcba1809d780178a2ddaf119046da8f24d46a
 
     return 0;
 }
