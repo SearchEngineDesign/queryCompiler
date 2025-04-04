@@ -41,8 +41,7 @@ struct crawlerResults {
 
 ThreadSafeFrontier frontier(NUM_OBJECTS, ERROR_RATE);
 ThreadSafeQueue<crawlerResults> crawlResultsQueue;
-// TODO: CHANGE THIS PATH ACCORDINGLY
-IndexWriteHandler indexHandler("TODO");
+IndexWriteHandler indexHandler("./log/chunks");
 
 ThreadPool crawlPool(NUM_CRAWL_THREADS);
 ThreadPool parsePool(NUM_PARSER_THREADS);
@@ -111,11 +110,7 @@ void parseFunc(void *arg) {
 // }
 
 int main() {
-    //TODO: change back
-   //  frontier.buildFrontier("/Users/tkmaher/eecs498/SearchEngine/log/seedlist.txt");
-    string url = "https://en.wikipedia.org/";
-    frontier.insert(url);
-
+    frontier.buildFrontier("./log/seedlist.txt");
     // will run crawlURL and parseFunc 10 times each
     for (size_t i = 0; i < 10; i++)
     {
