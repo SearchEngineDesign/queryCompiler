@@ -77,9 +77,9 @@ void crawlUrl(void *arg) {
     if (!Crawler::crawl(url, buffer, pageSize)) {
         crawlerResults cResult(url, buffer, pageSize);
         crawlResultsQueue.put(cResult);
-        parsePool.submit(parseFunc, (void*) nullptr);
-        parsePool.wake();
     }
+    parsePool.submit(parseFunc, (void*) nullptr);
+    parsePool.wake();
     
 
     delete[] buffer;
@@ -93,14 +93,12 @@ void parseFunc(void *arg) {
 
     for (const auto &link : parser.links) {
         frontier.insert(link.URL);
+        crawlPool.submit(crawlUrl, (void*) nullptr);
+        crawlPool.wake();
     }
 
     indexHandler.addDocument(parser);
 
-    if (!frontier.empty()) {
-        crawlPool.submit(crawlUrl, (void*) nullptr);
-        crawlPool.wake();
-    }
 }
 
 // for testing the readibility of the index chunks
