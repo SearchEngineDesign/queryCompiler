@@ -79,9 +79,9 @@ void parseFunc(void *arg) {
     for (const auto& link : parser.links) {
         frontier.insert(link.URL);
     }
-
+    
     indexHandler.addDocument(parser);
-
+    
     if (!frontier.empty()) {
         crawlPool.submit(crawlUrl, (void*) nullptr);
         crawlPool.wake();

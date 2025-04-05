@@ -79,6 +79,18 @@ class string
             }
          }
       
+      // reserve constructor
+      // REQUIRES: Nothing
+      // MODIFIES: *this
+      // EFFECTS: reserves string of length
+      //IMPORTANT: is not null-terminated
+      string (size_t length)
+         {
+         m_size = 0;
+         m_capacity = length;
+         m_data = new char[ m_capacity ];
+         }
+      
 
       // Copy Constructor
       // REQUIRES: Nothing
@@ -211,6 +223,10 @@ class string
             // assert ( i < m_size );
             return m_data[i];
          }
+      const char &operator[](size_t i) const
+         {
+            return m_data[i];
+         }
 
       // string Append
       // REQUIRES: Nothing
@@ -256,7 +272,7 @@ class string
       // REQUIRES: Nothing
       // MODIFIES: *this
       // EFFECTS: Appends c to the string
-      void push_back( char c )
+      void pushBack( char c )
          {
             if ( m_size == m_capacity - 1 )
             {
@@ -283,6 +299,20 @@ class string
             {
                m_data[--m_size] = '\0';
             }
+         }
+      // REQUIRES: string is not empty
+      // MODIFIES: *this
+      // EFFECTS: Removes the last n characters of the string
+      void popBack (size_t n)
+         {
+         if (m_size <= n)
+            {
+            m_size = 0;
+            m_data[0] = '\0';
+            return;
+            }
+         m_size -= n;
+         m_data[m_size] = '\0';
          }
 
       // Equality Operator
@@ -449,21 +479,32 @@ class string
       // MODIFIES: Nothing
       // EFFECTS: Returns a substring starting at pos with length count
       string substr(size_t pos, size_t count) const {
-         if (pos > m_size) {
+         if (pos > m_size)
             return string();
-         }
-         if (pos + count > m_size) {
+         if (pos + count > m_size)
             count = m_size - pos;
-         }
          return string(m_data + pos, count);
       }
 
       string substr(size_t pos) const {
-         if (pos > m_size) {
+         if (pos > m_size)
             return string();
+         return string(m_data + pos, m_size-pos);
+      }
+
+      string substr(int pos) const {
+         if (pos > static_cast<int>( m_size ) )
+            return string();
+         if (pos < 0) 
+            {
+            if ( ( pos * -1 ) > m_size )
+               return *this;
+            return string( m_data + m_size + pos, ( pos * -1) );
          }
          return string(m_data + pos, m_size-pos);
       }
+
+      
       // Overload the + operator
       // REQUIRES: Nothing
       // MODIFIES: Nothing
