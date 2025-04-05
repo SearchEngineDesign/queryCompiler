@@ -70,17 +70,17 @@ void crawlUrl(void *arg) {
     char * buffer = new char[MAX_PAGE_SIZE];
     size_t pageSize = 0;
 
-    crawlRobots(url.makeRobots(), url.Service + string("://") + url.Host);
+    //crawlRobots(url.makeRobots(), url.Service + string("://") + url.Host);
 
     std::cout << url.urlName << std::endl;
 
     if (!Crawler::crawl(url, buffer, pageSize)) {
         crawlerResults cResult(url, buffer, pageSize);
         crawlResultsQueue.put(cResult);
-
         parsePool.submit(parseFunc, (void*) nullptr);
         parsePool.wake();
     }
+    
 
     delete[] buffer;
 }
@@ -129,8 +129,9 @@ void parseFunc(void *arg) {
 //     IndexReadHandler::testReader(indexHandler);
 // }
 
+
 int main() {
-    frontier.buildFrontier("./log/seedlist.txt");
+    frontier.buildFrontier("./log/frontier/list");
     // will run crawlURL and parseFunc 10 times each
     for (size_t i = 0; i < 10; i++)
     {
