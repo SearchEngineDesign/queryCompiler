@@ -1,4 +1,4 @@
-#include "crawler/crawler.h"
+#include "Crawler/crawler.h"
 #include "parser/HtmlParser.h"
 #include <cstddef>
 #include <pthread.h>
@@ -46,11 +46,31 @@ IndexWriteHandler indexHandler("./log/chunks");
 ThreadPool crawlPool(NUM_CRAWL_THREADS);
 ThreadPool parsePool(NUM_PARSER_THREADS);
 
+void crawlRobots(ParsedUrl robots, string base) {
+    char * buffer = new char[MAX_PAGE_SIZE];
+    size_t pageSize = 0;
+    if (!frontier.contains(robots.urlName)) {
+        if (!Crawler::crawl(robots, buffer, pageSize)) {
+            HtmlParser parser(buffer, pageSize, base);
+            for (const auto &goodlink : parser.bodyWords) {
+                frontier.insert(goodlink);
+            }
+            for (const auto &badlink : parser.headWords) {
+                frontier.blacklist(badlink);
+            }
+            buffer = new char[MAX_PAGE_SIZE];
+        }
+        frontier.blacklist(robots.urlName);
+    }
+}
+
 void crawlUrl(void *arg) {
 
     ParsedUrl url = ParsedUrl(frontier.getNextURLorWait());
     char * buffer = new char[MAX_PAGE_SIZE];
-    size_t pageSize;
+    size_t pageSize = 0;
+
+    crawlRobots(url.makeRobots(), url.Service + string("://") + url.Host);
 
     std::cout << url.urlName << std::endl;
 

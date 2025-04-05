@@ -65,6 +65,10 @@ class ParsedUrl {
                 Path = "";
             }
         }
+
+        string makeRobots() {
+            return Service + string("://") + Host + string("/robots.txt");
+        }
     
         ~ParsedUrl() {
             // No manual memory management required with string
