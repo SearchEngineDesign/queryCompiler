@@ -8,6 +8,8 @@ class ParsedUrl {
         string urlName;
         string Service, Host, Port, Path, Domain;
     
+        ParsedUrl() {}
+
         ParsedUrl(const string& url) {
             urlName = url;
     
