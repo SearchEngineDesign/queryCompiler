@@ -405,7 +405,7 @@ class IndexBlob
 
       static void Discard( const IndexBlob *blob )
          {
-         delete[] blob;
+         delete blob;
          }
    };
 
