@@ -85,7 +85,7 @@ struct SerialDocumentVector
             size_t size = 0;
             // for each post
             for (auto &i : *vec) {
-               size += i.size();
+               size += SerialString::BytesRequired(i);
             }
             
             return RoundUp(size, sizeof(size_t));
@@ -101,7 +101,7 @@ struct SerialPostingList
       char type;
       uint8_t seekIndex;
       // byte offsets to seek pairs + each individual post 
-      size_t offsets[ Unknown + Unknown ];
+      uint16_t offsets[ Unknown + Unknown ];
 
       static size_t BytesRequired(const PostingList * p) 
          {
@@ -116,9 +116,10 @@ struct SerialPostingList
             size += sizeof(uint8_t);
             size = RoundUp(size, sizeof(size_t));
             // the list of seek offsets
-            size += sizeof(size_t) * p->getSeekIndex();
+            size += sizeof(uint16_t) * p->getSeekIndex();
             // list of post offsets
-            size += sizeof(size_t) * list.size();
+            size += sizeof(uint16_t) * list.size();
+            size = RoundUp(size, sizeof(size_t));
 
             // seek list size
             size += (sizeof(size_t) << 1) * p->getSeekIndex();
@@ -149,8 +150,9 @@ struct SerialPostingList
             offset += sizeof(char);
             offset += sizeof(uint8_t);
             offset = RoundUp(offset, sizeof(size_t));
-            offset += (sizeof(size_t)) * p->getSeekIndex();
-            offset += (sizeof(size_t)) * listIn.size();
+            offset += (sizeof(uint16_t)) * p->getSeekIndex();
+            offset += (sizeof(uint16_t)) * listIn.size();
+            offset = RoundUp(offset, sizeof(size_t));
 
             const vector<std::pair<size_t, size_t>> *seekTable = p->getSeekTable();
             size_t increment = sizeof(size_t) << 1;
@@ -401,7 +403,7 @@ class IndexBlob
 
       // Discard
 
-      static void Discard( IndexBlob *blob )
+      static void Discard( const IndexBlob *blob )
          {
          delete blob;
          }

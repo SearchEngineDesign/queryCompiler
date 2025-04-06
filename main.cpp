@@ -1,5 +1,6 @@
-#include "crawler/crawler.h"
+#include "Crawler/crawler.h"
 #include "parser/HtmlParser.h"
+#include <cstddef>
 #include <pthread.h>
 #include "utils/vector.h"
 #include "frontier/frontier.h"
@@ -17,12 +18,11 @@ static const int NUM_OBJECTS = 1000000; // estimated number of objects for bloom
 
 static const int DEFAULT_PAGE_SIZE = 200000;
 
-static const int NUM_CRAWL_THREADS = 10;
-static const int NUM_PARSER_THREADS = 10;
+static const int NUM_CRAWL_THREADS = 15;
+static const int NUM_PARSER_THREADS = 5;
 static const int MAX_PAGE_SIZE = 2000000;
 
 void parseFunc(void *arg);
-
 
 struct crawlerResults {
     ParsedUrl url;
@@ -39,33 +39,48 @@ struct crawlerResults {
 
 };
 
-
 ThreadSafeFrontier frontier(NUM_OBJECTS, ERROR_RATE);
 ThreadSafeQueue<crawlerResults> crawlResultsQueue;
-// TODO: CHANGE THIS PATH ACCORDINGLY
-IndexWriteHandler indexHandler("/Users/tkmaher/eecs498/SearchEngine/index/chunks");
+IndexWriteHandler indexHandler("./log/chunks");
 
 ThreadPool crawlPool(NUM_CRAWL_THREADS);
 ThreadPool parsePool(NUM_PARSER_THREADS);
 
+void crawlRobots(ParsedUrl robots, string base) {
+    char * buffer = new char[MAX_PAGE_SIZE];
+    size_t pageSize = 0;
+    if (!frontier.contains(robots.urlName)) {
+        if (!Crawler::crawl(robots, buffer, pageSize)) {
+            HtmlParser parser(buffer, pageSize, base);
+            for (const auto &goodlink : parser.bodyWords) {
+                frontier.insert(goodlink);
+            }
+            for (const auto &badlink : parser.headWords) {
+                frontier.blacklist(badlink);
+            }
+            buffer = new char[MAX_PAGE_SIZE];
+        }
+        frontier.blacklist(robots.urlName);
+    }
+}
+
 void crawlUrl(void *arg) {
-
-
-    (void) arg;
 
     ParsedUrl url = ParsedUrl(frontier.getNextURLorWait());
     char * buffer = new char[MAX_PAGE_SIZE];
-    size_t pageSize;
+    size_t pageSize = 0;
+
+    //crawlRobots(url.makeRobots(), url.Service + string("://") + url.Host);
 
     std::cout << url.urlName << std::endl;
 
     if (!Crawler::crawl(url, buffer, pageSize)) {
         crawlerResults cResult(url, buffer, pageSize);
         crawlResultsQueue.put(cResult);
-
-        parsePool.submit(parseFunc, (void*) nullptr);
-        parsePool.wake();
     }
+    parsePool.submit(parseFunc, (void*) nullptr);
+    parsePool.wake();
+    
 
     delete[] buffer;
 }
@@ -76,52 +91,44 @@ void parseFunc(void *arg) {
 
     HtmlParser parser(cResult.buffer.data(), cResult.pageSize);
 
-    for (const auto& link : parser.links) {
+    for (const auto &link : parser.links) {
         frontier.insert(link.URL);
-    }
-    
-    indexHandler.addDocument(parser);
-    
-    if (!frontier.empty()) {
         crawlPool.submit(crawlUrl, (void*) nullptr);
         crawlPool.wake();
     }
+    
+    indexHandler.addDocument(parser);
 }
 
 // for testing the readibility of the index chunks
 
-void testBlob() {
-    HtmlParser parser = HtmlParser();
-    for (int i = 0; i < 100; i++)
-        parser.bodyWords.emplace_back(string("body"));
-    for (int i = 0; i < 20; i++)
-        parser.titleWords.emplace_back(string("title"));
-    parser.base = "https://baseURL1";
-    indexHandler.addDocument(parser);
-    indexHandler.index->documents.push_back("https://baseURL2");
-    indexHandler.index->documents.push_back("https://baseURL3");
-    indexHandler.index->DocumentsInIndex += 2;
+// void testBlob() {
+//     HtmlParser parser = HtmlParser();
+//     for (int i = 0; i < 100; i++)
+//         parser.bodyWords.emplace_back(string("body"));
+//     for (int i = 0; i < 20; i++)
+//         parser.titleWords.emplace_back(string("title"));
+//     parser.base = "https://baseURL1";
+//     indexHandler.addDocument(parser);
+//     indexHandler.index->documents.push_back("https://baseURL2");
+//     indexHandler.index->documents.push_back("https://baseURL3");
+//     indexHandler.index->DocumentsInIndex += 2;
 
-    Tuple<string, PostingList> *t1 = indexHandler.index->getDict()->Find("body");
-    assert(t1->value.getUseCount() == 100);
-    assert(t1->value.getDocCount() == 1);
-    Tuple<string, PostingList> *t2 = indexHandler.index->getDict()->Find("@title");
-    assert(t2->value.getUseCount() == 20);
-    assert(t2->value.getDocCount() == 1);
+//     Tuple<string, PostingList> *t1 = indexHandler.index->getDict()->Find("body");
+//     assert(t1->value.getUseCount() == 100);
+//     assert(t1->value.getDocCount() == 1);
+//     Tuple<string, PostingList> *t2 = indexHandler.index->getDict()->Find("@title");
+//     assert(t2->value.getUseCount() == 20);
+//     assert(t2->value.getDocCount() == 1);
 
-    indexHandler.WriteIndex();
+//     indexHandler.WriteIndex();
 
-    IndexReadHandler::testReader(indexHandler);
-}
+//     IndexReadHandler::testReader(indexHandler);
+// }
+
 
 int main() {
-    
-    // TODO: replace with seed list (and periodically write frontier to file)
-    string url = "https://en.wikipedia.org/";
-    
-    frontier.insert(url);
-
-    
+    frontier.buildFrontier("./log/frontier/list");
     // will run crawlURL and parseFunc 10 times each
     for (size_t i = 0; i < 10; i++)
     {

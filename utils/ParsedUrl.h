@@ -8,6 +8,8 @@ class ParsedUrl {
         string urlName;
         string Service, Host, Port, Path, Domain;
     
+        ParsedUrl() {}
+
         ParsedUrl(const string& url) {
             urlName = url;
     
@@ -62,6 +64,10 @@ class ParsedUrl {
                 Host = url;
                 Path = "";
             }
+        }
+
+        string makeRobots() {
+            return Service + string("://") + Host + string("/robots.txt");
         }
     
         ~ParsedUrl() {

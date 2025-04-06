@@ -486,6 +486,8 @@ class string
          return string(m_data + pos, count);
       }
 
+
+      // Returns all data after pos
       string substr(size_t pos) const {
          if (pos > m_size)
             return string();
@@ -524,6 +526,10 @@ class string
 
          result.m_data[result.m_size] = '\0';
          return result;
+      }
+
+      char * data() const{
+         return m_data;
       }
 
    private:
