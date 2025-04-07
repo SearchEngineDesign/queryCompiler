@@ -1,9 +1,10 @@
 import os
-#from flask import Flask
+from flask import Flask
 import subprocess
 from time import sleep
-#app = Flask(__name__)
+app = Flask(__name__)
 
+@app.route('/')
 def run_cpp_program():
     try:
         print("Running subprocess.")
@@ -47,10 +48,5 @@ def run_cpp_program():
         return 1
     return 0
 
-#@app.route('/')
-def loop():
-    run_cpp_program()
-
 if __name__ == '__main__':
-    run_cpp_program()
-    #app.run(debug=True, host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+    app.run(debug=True, host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
