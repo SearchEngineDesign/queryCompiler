@@ -70,16 +70,19 @@ void crawlUrl(void *arg) {
     char * buffer = new char[MAX_PAGE_SIZE];
     size_t pageSize = 0;
 
-    //crawlRobots(url.makeRobots(), url.Service + string("://") + url.Host);
+    crawlRobots(url.makeRobots(), url.Service + string("://") + url.Host);
 
     std::cout << url.urlName << std::endl;
+
 
     if (!Crawler::crawl(url, buffer, pageSize)) {
         crawlerResults cResult(url, buffer, pageSize);
         crawlResultsQueue.put(cResult);
     }
-    parsePool.submit(parseFunc, (void*) nullptr);
-    parsePool.wake();
+    if (parsePool.alive()) {
+        parsePool.submit(parseFunc, (void*) nullptr);
+        parsePool.wake();
+    }
     
 
     delete[] buffer;
@@ -93,43 +96,58 @@ void parseFunc(void *arg) {
 
     for (const auto &link : parser.links) {
         frontier.insert(link.URL);
-        crawlPool.submit(crawlUrl, (void*) nullptr);
-        crawlPool.wake();
+        if (crawlPool.alive()) {
+            crawlPool.submit(crawlUrl, (void*) nullptr);
+            crawlPool.wake();
+        }
     }
 
-    indexHandler.addDocument(parser);
-
+    if (parser.base.size() > 0) {
+        if (indexHandler.addDocument(parser) == 1) {
+            frontier.writeFrontier();
+            crawlPool.shutdown();
+            parsePool.shutdown();
+        }
+    }
 }
 
-// for testing the readibility of the index chunks
+void testreader() {
+    IndexReadHandler::testReader("./log/chunks/1");
+}
 
-// void testBlob() {
-//     HtmlParser parser = HtmlParser();
-//     for (int i = 0; i < 100; i++)
-//         parser.bodyWords.emplace_back(string("body"));
-//     for (int i = 0; i < 20; i++)
-//         parser.titleWords.emplace_back(string("title"));
-//     parser.base = "https://baseURL1";
-//     indexHandler.addDocument(parser);
-//     indexHandler.index->documents.push_back("https://baseURL2");
-//     indexHandler.index->documents.push_back("https://baseURL3");
-//     indexHandler.index->DocumentsInIndex += 2;
-
-//     Tuple<string, PostingList> *t1 = indexHandler.index->getDict()->Find("body");
-//     assert(t1->value.getUseCount() == 100);
-//     assert(t1->value.getDocCount() == 1);
-//     Tuple<string, PostingList> *t2 = indexHandler.index->getDict()->Find("@title");
-//     assert(t2->value.getUseCount() == 20);
-//     assert(t2->value.getDocCount() == 1);
-
-//     indexHandler.WriteIndex();
-
-//     IndexReadHandler::testReader(indexHandler);
-// }
-
-
-int main() {
-    frontier.buildFrontier("./log/frontier/list");
+int main(int argc, char * argv[]) {
+    //testreader();
+    int exit = 0;
+    if (argc == 2) {
+        std::cout << "Building frontier with specified seedlist." << std::endl;
+        if (frontier.buildFrontier(argv[1]) == 1) {
+            std::cerr << "Expected input: ./search [path to seedlist]" << std::endl;
+            exit = 1;
+        }
+    } else if (argc == 3) {
+        std::cout << "Building frontier with specified seedlist." << std::endl;
+        if (frontier.buildFrontier(argv[1]) == 1) {
+            std::cerr << "Expected input: ./search [path to seedlist]" << std::endl;
+            exit = 1;
+        }
+        std::cout << "Building bloom filter with specified file." << std::endl;
+        if (frontier.buildBloomFilter(argv[2]) == 1) {
+            std::cerr << "Expected input: ./search [path to seedlist] [path to bloomfilter]" << std::endl;
+            exit = 1;
+        }
+    } else if (argc > 3) {
+        std::cerr << "Expected input: ./search [seedlist]]" << std::endl;
+        exit = 1;
+    } else {   
+        std::cout << "Building frontier with default seedlist." << std::endl;
+        if (frontier.buildFrontier("./log/frontier/initlist") == 1)
+            exit = 1;
+    }
+    if (exit == 1) {
+        crawlPool.shutdown();
+        parsePool.shutdown();
+        return 1;
+    }
     // will run crawlURL and parseFunc 10 times each
     for (size_t i = 0; i < 10; i++)
     {

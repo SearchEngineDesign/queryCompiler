@@ -79,6 +79,19 @@ class string
             }
          }
       
+      // string constructor with length
+      // REQUIRES: Nothing
+      // MODIFIES: *this
+      // EFFECTS: Creates a string with length
+      string( size_t length )
+         {
+
+            m_size = length;
+            m_capacity = m_size + 1;
+            m_data = new char[ m_capacity ];
+            m_data[ m_size ] = '\0';
+         }
+
 
       // Copy Constructor
       // REQUIRES: Nothing
@@ -285,6 +298,19 @@ class string
             }
          }
 
+      // Pop Back
+      // REQUIRES: string is not empty
+      // MODIFIES: *this
+      // EFFECTS: Removes the last n charaters of the string
+      void popBack( size_t n )
+         {
+            while ( m_size > 0 && n > 0)
+            {
+               m_data[--m_size] = '\0';
+               --n;
+            }
+         }
+
       // Equality Operator
       // REQUIRES: Nothing
       // MODIFIES: Nothing
@@ -442,6 +468,11 @@ class string
       char *at( size_t pos ) const 
          {
             return m_data + pos;
+         }
+
+      char &operator[ ]( size_t i ) const 
+         {
+            return *(m_data + i);
          }
 
       // Substring
