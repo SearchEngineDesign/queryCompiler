@@ -413,6 +413,18 @@ class string
 
          }
       
+      // charcount
+      // REQUIRES: Nothing
+      // MODIFIES: Nothing
+      // EFFECTS: Returns the number of occurances of char c in the string.
+      int charcount( const char c ) const {
+         int count = 0;
+         for (int i = 0; i < m_size; i++)
+            if (m_data[i] == c)
+               count++;
+         return count;
+      }
+
       // find
       // REQUIRES: Nothing
       // MODIFIES: Nothing

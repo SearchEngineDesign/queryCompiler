@@ -16,11 +16,9 @@
 static const float ERROR_RATE = 0.0001; // 0.01% error rate for bloom filter
 static const int NUM_OBJECTS = 1000000; // estimated number of objects for bloom filter
 
-static const int DEFAULT_PAGE_SIZE = 200000;
-
 static const int NUM_CRAWL_THREADS = 15;
 static const int NUM_PARSER_THREADS = 5;
-static const int MAX_PAGE_SIZE = 2000000;
+static const int MAX_PAGE_SIZE = 1000000;
 
 void parseFunc(void *arg);
 
@@ -72,9 +70,6 @@ void crawlUrl(void *arg) {
 
     crawlRobots(url.makeRobots(), url.Service + string("://") + url.Host);
 
-    std::cout << url.urlName << std::endl;
-
-
     if (!Crawler::crawl(url, buffer, pageSize)) {
         crawlerResults cResult(url, buffer, pageSize);
         crawlResultsQueue.put(cResult);
@@ -103,16 +98,30 @@ void parseFunc(void *arg) {
     }
 
     if (parser.base.size() > 0) {
-        if (indexHandler.addDocument(parser) == 1) {
-            frontier.writeFrontier();
-            crawlPool.shutdown();
-            parsePool.shutdown();
+        std::cout << parser.base << std::endl; // heartbeat
+        switch (indexHandler.addDocument(parser)) {
+            case -1:
+                // whole frontier write
+                std::cout << "Completed write of chunk " << indexHandler.getFilename() << std::endl;
+                std::cout << "Writing frontier and bloom filter out to file." << std::endl;
+                frontier.writeFrontier(false, 0);
+                crawlPool.shutdown();
+                parsePool.shutdown();
+                break;
+            case 1:
+                // mini frontier write
+                std::cout << "Completed write of chunk " << indexHandler.getFilename() << std::endl;
+                std::cout << "Writing truncated frontier out to file" << std::endl;
+                frontier.writeFrontier(true, 5);
+                break;
+            default:
+                break;
         }
     }
 }
 
 void testreader() {
-    IndexReadHandler::testReader("./log/chunks/1");
+    IndexReadHandler::testReader("./log/chunks/2");
 }
 
 int main(int argc, char * argv[]) {
