@@ -63,4 +63,4 @@ def loop():
         run_cpp_program()
 
 if __name__ == '__main__':
-    run_cpp_program()
+    loop()

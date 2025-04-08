@@ -104,7 +104,7 @@ void parseFunc(void *arg) {
                 // whole frontier write
                 std::cout << "Completed write of chunk " << indexHandler.getFilename() << std::endl;
                 std::cout << "Writing frontier and bloom filter out to file." << std::endl;
-                frontier.writeFrontier(false, 0);
+                frontier.writeFrontier(1);
                 crawlPool.shutdown();
                 parsePool.shutdown();
                 break;
@@ -112,7 +112,7 @@ void parseFunc(void *arg) {
                 // mini frontier write
                 std::cout << "Completed write of chunk " << indexHandler.getFilename() << std::endl;
                 std::cout << "Writing truncated frontier out to file" << std::endl;
-                frontier.writeFrontier(true, 5);
+                frontier.writeFrontier(5);
                 break;
             default:
                 break;
