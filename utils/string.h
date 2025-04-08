@@ -18,7 +18,8 @@ class string
       // EFFECTS: Creates an empty string
       string( ) : m_size( 0 ), m_capacity( 1 ), m_data( new char[ 1 ] )
          {
-            m_data[0] = '\0';
+            m_data = new char[1];
+            *m_data = '\0';
          }
 
       // string Literal / C string Constructor
@@ -48,7 +49,7 @@ class string
                m_size = 0;
                m_capacity = 1;
                m_data = new char[1];
-               m_data[0] = '\0';
+               *m_data = '\0';
             }
          }
 
@@ -68,14 +69,14 @@ class string
                {
                   m_data[ i ] = cstr[ i ];
                }
-               m_data[ m_size ] = '\0';
+               *(m_data + m_size) = '\0';
             }
             else
             {
                m_size = 0;
                m_capacity = 1;
                m_data = new char[1];
-               m_data[0] = '\0';
+               *m_data = '\0';
             }
          }
       
@@ -89,7 +90,7 @@ class string
             m_size = length;
             m_capacity = m_size + 1;
             m_data = new char[ m_capacity ];
-            m_data[ m_size ] = '\0';
+            *(m_data + m_size) = '\0';
          }
 
 
@@ -102,13 +103,9 @@ class string
 
             m_size = other.m_size;
             m_capacity = other.m_capacity;
-            m_data = new char[m_size + 1];
-            for ( int i = 0; i < m_size; i ++ )
-               {
-                  m_data[i] = other.m_data[i];
-               }
-            m_data[m_size] = '\0';
-
+            m_data = new char[ other.m_capacity ];
+            memcpy(m_data, other.m_data, m_size + 1);
+            *(m_data + m_size) = '\0';
          }
 
       // c_string converter
@@ -146,7 +143,7 @@ class string
                      {
                         m_data[i] = other.m_data[i];
                      }
-                  m_data[m_size] = '\0';
+                  *(m_data + m_size) = '\0';
                }
             return *this;
          }
@@ -236,19 +233,12 @@ class string
             {
                m_capacity = m_size + other.m_size + 1;
                char* new_data = new char[m_capacity];
-               for ( size_t i = 0; i < m_size; ++i )
-               {
-                  new_data[i] = m_data[i];
-               }
+               memcpy(new_data, m_data, m_size);
                delete[] m_data;
                m_data = new_data;
             }
-            for ( size_t i = 0; i < other.m_size; ++i )  
-            {
-               m_data[m_size + i] = other.m_data[i];
-            }
+            memcpy(m_data + m_size, other.m_data, other.m_size + 1);
             m_size += other.m_size;
-            m_data[m_size] = '\0';
          }
       
       string operator+( const string &other )
@@ -275,15 +265,12 @@ class string
             {
                m_capacity *= 2;
                char* new_data = new char[m_capacity];
-               for ( size_t i = 0; i < m_size; ++i )
-               {
-                     new_data[i] = m_data[i];
-               }
+               memcpy(new_data, m_data, m_size);
                delete[] m_data;
                m_data = new_data;
             }
-            m_data[m_size++] = c;
-            m_data[m_size] = '\0';
+            *(m_data + m_size++) = c;
+            *(m_data + m_size) = '\0';
          }
 
       // Pop Back
@@ -294,7 +281,7 @@ class string
          {
             if ( m_size > 0 )
             {
-               m_data[--m_size] = '\0';
+               *(m_data + --m_size) = '\0';
             }
          }
 
@@ -306,7 +293,7 @@ class string
          {
             while ( m_size > 0 && n > 0)
             {
-               m_data[--m_size] = '\0';
+               *(m_data + --m_size) = '\0';
                --n;
             }
          }
@@ -405,11 +392,8 @@ class string
             m_size = count;
             m_capacity = m_size + 1;
             m_data = new char[ m_capacity ];
-            for ( int i = 0; i < m_size; i++ )
-               {
-                  m_data[i] = s[i];
-               }
-            m_data[ m_size ] = '\0';
+            memcpy(m_data, s, m_size);
+            *(m_data + m_size) = '\0';
 
          }
       
@@ -519,14 +503,11 @@ class string
          result.m_capacity = result.m_size + 1;
          result.m_data = new char[result.m_capacity];
 
-         for ( size_t i = 0; i < m_size; ++i )
-            result.m_data[i] = m_data[i];
-         
-         for ( size_t i = 0; i < other.m_size; ++i )
-            result.m_data[m_size + i] = other.m_data[i];
-         
+         memcpy(result.m_data, m_data, m_size);
 
-         result.m_data[result.m_size] = '\0';
+         memcpy(result.m_data + m_size, other.m_data, other.m_size);
+         
+         *(result.m_data + result.m_size) = '\0';
          return result;
       }
 
@@ -537,7 +518,7 @@ class string
    private:
       size_t m_size;
       size_t m_capacity;
-      char *m_data;
+      char *m_data = nullptr;
    };
 
 std::ostream &operator<<( std::ostream &os, const string &s );
