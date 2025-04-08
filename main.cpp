@@ -16,9 +16,8 @@
 static const float ERROR_RATE = 0.0001; // 0.01% error rate for bloom filter
 static const int NUM_OBJECTS = 1000000; // estimated number of objects for bloom filter
 
-static const int NUM_CRAWL_THREADS = 15;
-static const int NUM_PARSER_THREADS = 5;
-static const int MAX_PAGE_SIZE = 1000000;
+static const int NUM_CRAWL_THREADS = 30;
+static const int NUM_PARSER_THREADS = 9;
 
 void parseFunc(void *arg);
 
@@ -45,9 +44,9 @@ ThreadPool crawlPool(NUM_CRAWL_THREADS);
 ThreadPool parsePool(NUM_PARSER_THREADS);
 
 void crawlRobots(ParsedUrl robots, string base) {
-    char * buffer = new char[MAX_PAGE_SIZE];
-    size_t pageSize = 0;
     if (!frontier.contains(robots.urlName)) {
+        char * buffer = new char[BUFFER_SIZE];
+        size_t pageSize = 0;
         if (!Crawler::crawl(robots, buffer, pageSize)) {
             HtmlParser parser(buffer, pageSize, base);
             for (const auto &goodlink : parser.bodyWords) {
@@ -56,8 +55,8 @@ void crawlRobots(ParsedUrl robots, string base) {
             for (const auto &badlink : parser.headWords) {
                 frontier.blacklist(badlink);
             }
-            buffer = new char[MAX_PAGE_SIZE];
         }
+        delete[] buffer;
         frontier.blacklist(robots.urlName);
     }
 }
@@ -65,10 +64,11 @@ void crawlRobots(ParsedUrl robots, string base) {
 void crawlUrl(void *arg) {
 
     ParsedUrl url = ParsedUrl(frontier.getNextURLorWait());
-    char * buffer = new char[MAX_PAGE_SIZE];
-    size_t pageSize = 0;
 
     crawlRobots(url.makeRobots(), url.Service + string("://") + url.Host);
+
+    char * buffer = new char[BUFFER_SIZE];
+    size_t pageSize = 0;
 
     if (!Crawler::crawl(url, buffer, pageSize)) {
         crawlerResults cResult(url, buffer, pageSize);
@@ -104,7 +104,7 @@ void parseFunc(void *arg) {
                 // whole frontier write
                 std::cout << "Completed write of chunk " << indexHandler.getFilename() << std::endl;
                 std::cout << "Writing frontier and bloom filter out to file." << std::endl;
-                frontier.writeFrontier(false, 0);
+                frontier.writeFrontier(1);
                 crawlPool.shutdown();
                 parsePool.shutdown();
                 break;
@@ -112,7 +112,7 @@ void parseFunc(void *arg) {
                 // mini frontier write
                 std::cout << "Completed write of chunk " << indexHandler.getFilename() << std::endl;
                 std::cout << "Writing truncated frontier out to file" << std::endl;
-                frontier.writeFrontier(true, 5);
+                frontier.writeFrontier(5);
                 break;
             default:
                 break;
@@ -121,7 +121,7 @@ void parseFunc(void *arg) {
 }
 
 void testreader() {
-    IndexReadHandler::testReader("./log/chunks/2");
+    IndexReadHandler::testReader("./log/chunks/1");
 }
 
 int main(int argc, char * argv[]) {
