@@ -16,8 +16,8 @@
 static const float ERROR_RATE = 0.0001; // 0.01% error rate for bloom filter
 static const int NUM_OBJECTS = 1000000; // estimated number of objects for bloom filter
 
-static const int NUM_CRAWL_THREADS = 15;
-static const int NUM_PARSER_THREADS = 5;
+static const int NUM_CRAWL_THREADS = 30;
+static const int NUM_PARSER_THREADS = 9;
 
 void parseFunc(void *arg);
 
