@@ -18,4 +18,4 @@
 	url = https://github.com/SearchEngineDesign/isr.git
 [submodule "queryCompiler"]
 	path = queryCompiler
-	url = https://github.com/SearchEngineDesign/queryCompiler
+	url = https://github.com/SearchEngineDesign/queryCompiler.git
