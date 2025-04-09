@@ -5,11 +5,11 @@ CXXFLAGS = -std=c++17 -g
 ifeq ($(OS),Windows_NT)
 	OPENSSL_DIR = /usr/include/openssl
 	INCLUDES = -I$(OPENSSL_DIR)
-	LDFLAGS = -L/usr/lib
+	LDFLAGS = -L/usr/lib -Lindex/stemmer/utf8proc
 else
 	OPENSSL_DIR = /opt/homebrew/opt/openssl@3
 	INCLUDES = -I$(OPENSSL_DIR)/include
-	LDFLAGS = -L$(OPENSSL_DIR)/lib
+	LDFLAGS = -L$(OPENSSL_DIR)/lib -Lindex/stemmer/utf8proc
 endif
 
 
