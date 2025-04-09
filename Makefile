@@ -1,5 +1,6 @@
 CXX = g++
-CXXFLAGS = -std=c++11 -g
+CXXFLAGS = -std=c++17 -g
+
 
 ifeq ($(OS),Windows_NT)
 	OPENSSL_DIR = /usr/include/openssl
@@ -22,4 +23,5 @@ search: main.cpp parser/HtmlParser.cpp parser/HtmlTags.cpp Crawler/crawler.cpp u
 .PHONY: clean
 
 clean:
-	rm -f search ./log/chunks/*
+	rm -f search 
+	find ./log/chunks -size 0 -delete
