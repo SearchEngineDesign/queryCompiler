@@ -77,14 +77,12 @@ void indexWrite(HtmlParser &parser) {
     switch (indexHandler.addDocument(parser)) {
         case -1:
             // whole frontier write
-            std::cout << "Completed write of chunk " << indexHandler.getFilename() << std::endl;
             std::cout << "Writing frontier and bloom filter out to file." << std::endl;
             frontier.writeFrontier(1);
             shutdown();
             break;
         case 1:
-            // mini frontier write
-            std::cout << "Completed write of chunk " << indexHandler.getFilename() << std::endl;
+            // mini frontier write -- int 5 denotes the random chance of writing a url to the file
             std::cout << "Writing truncated frontier out to file" << std::endl;
             frontier.writeFrontier(5);
             break;
@@ -220,6 +218,7 @@ int main(int argc, char * argv[]) {
     {
         parsePool.submit(parseFunc, (void*) nullptr);
     }    
+
 
     return 0;
 }
