@@ -1,5 +1,6 @@
 CXX = g++
-CXXFLAGS = -std=c++11 -g
+CXXFLAGS = -std=c++17 -g
+
 
 ifeq ($(OS),Windows_NT)
 	OPENSSL_DIR = /usr/include/openssl
