@@ -18,11 +18,10 @@
 static const float ERROR_RATE = 0.0001; // 0.01% error rate for bloom filter
 static const int NUM_OBJECTS = 1000000; // estimated number of objects for bloom filter
 
-static const int NUM_CRAWL_THREADS = 10;
-static const int NUM_PARSER_THREADS = 10;
+static const int NUM_CRAWL_THREADS = 30;
+static const int NUM_PARSER_THREADS = 30;
 
 static Crawler alpacino; // global instance of Crawler
-
 
 
 void parseFunc(void *arg);
@@ -53,7 +52,7 @@ struct crawlerResults {
     : url(u), pageSize(p) {
         buffer.reserve(p);
         for (int i = 0; i < p; ++i)
-        buffer.push_back(v[i]);
+            buffer.push_back(v[i]);
     }
     
 };
@@ -74,6 +73,26 @@ void shutdown(bool writeFrontier = false) {
     std::cout << "Shutdown complete." << std::endl;
 }
 
+void indexWrite(HtmlParser &parser) {
+    switch (indexHandler.addDocument(parser)) {
+        case -1:
+            // whole frontier write
+            std::cout << "Completed write of chunk " << indexHandler.getFilename() << std::endl;
+            std::cout << "Writing frontier and bloom filter out to file." << std::endl;
+            frontier.writeFrontier(1);
+            shutdown();
+            break;
+        case 1:
+            // mini frontier write
+            std::cout << "Completed write of chunk " << indexHandler.getFilename() << std::endl;
+            std::cout << "Writing truncated frontier out to file" << std::endl;
+            frontier.writeFrontier(5);
+            break;
+        default:
+            break;
+    }
+}
+
 void crawlRobots(const ParsedUrl& robots, const string& base) {
     if (!frontier.contains(robots.urlName)) {
 
@@ -84,7 +103,9 @@ void crawlRobots(const ParsedUrl& robots, const string& base) {
         size_t pageSize = 0;
         try {
             alpacino.crawl(robots, buffer.get(), pageSize);
-            HtmlParser parser(buffer.get(), pageSize, base);
+            const char * c = buffer.get();
+            HtmlParser parser(c, pageSize, base);
+            crawlerResults cResult(robots, buffer.get(), pageSize);
             for (const auto &goodlink : parser.bodyWords) {
                 frontier.insert(goodlink);
             }
@@ -126,15 +147,6 @@ void crawlUrl(void *arg) {
         }
         
     }
-
-
-
-    // if (parsePool.alive()) {
-    //     parsePool.submit(parseFunc, (void*) nullptr);
-    //     parsePool.wake();
-    // }
-
-
     
 
 }
@@ -149,48 +161,18 @@ void parseFunc(void *arg) {
 
         std::cout << "Parsed: " << cResult.url.urlName << std::endl;
 
-
-        // TODO: ADD TO INDEX?
-    
         for (const auto &link : parser.links) {
             frontier.insert(link.URL);
-            // if (crawlPool.alive()) {
-            //     crawlPool.submit(crawlUrl, (void*) nullptr);
-            //     crawlPool.wake();
-            // }
         }
         
+        if (parser.base.size() != 0) {
+            std::cout << "Indexed: " << cResult.url.urlName << std::endl;
+            indexWrite(parser);
+        }
     }
-
-    // if (parser.base.size() > 0) {
-    //     std::cout << parser.base << std::endl; // heartbeat
-    //     switch (indexHandler.addDocument(parser)) {
-    //         case -1:
-    //             // whole frontier write
-    //             std::cout << "Completed write of chunk " << indexHandler.getFilename() << std::endl;
-    //             std::cout << "Writing frontier and bloom filter out to file." << std::endl;
-    //             frontier.writeFrontier(1);
-    //             crawlPool.shutdown();
-    //             parsePool.shutdown();
-    //             break;
-    //         case 1:
-    //             // mini frontier write
-    //             std::cout << "Completed write of chunk " << indexHandler.getFilename() << std::endl;
-    //             std::cout << "Writing truncated frontier out to file" << std::endl;
-    //             frontier.writeFrontier(5);
-    //             break;
-    //         default:
-    //             break;
-    //     }
-    // }
-}
-
-void testreader() {
-    IndexReadHandler::testReader("./log/chunks/1");
 }
 
 int main(int argc, char * argv[]) {
-    //testreader();
     if (argc == 2) {
         std::cout << "Building frontier with specified seedlist." << std::endl;
         if (frontier.buildFrontier(argv[1]) == 1) {
@@ -217,9 +199,10 @@ int main(int argc, char * argv[]) {
         return 1;
     } else {   
         std::cout << "Building frontier with default seedlist." << std::endl;
-        if (frontier.buildFrontier("./log/frontier/initlist") == 1)
+        if (frontier.buildFrontier("./log/frontier/initlist") == 1) {
             shutdown();
             return 1;
+        }
     }
 
 
