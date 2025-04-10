@@ -1,71 +1,46 @@
 #pragma once
 
-#include "utils/string.h"
-#include "utils/vector.h"
-#include <fstream>
-
-enum TokenType {
-    TokenInvalid = -1,
-    TokenEOF = 0,
-    TokenAnd,
-    TokenOr,
-    TokenNot,
-    TokenOpenParen,
-    TokenCloseParen,
-    TokenQuote,
-    TokenWord,
-};
-
-class Token {
-    public:
-    TokenType getType() const {
-        return Type;
-    }
-    string getValue() const {
-        return Value;
-    }
-    Token() : Value(""), Type(TokenInvalid) {}
-    Token(const string& v, TokenType t) :  Value(v), Type(t) {}
-    private:
-    TokenType Type;
-    string Value;
-};
-
-class TokenTable {
-    public:
-    TokenTable() {
-        AddToken("AND", TokenAnd);
-        AddToken("&", TokenAnd);
-        AddToken("&&", TokenAnd);
-        AddToken("OR", TokenOr);
-        AddToken("|", TokenOr);
-        AddToken("||", TokenOr);
-        AddToken("NOT", TokenNot);
-        AddToken("!", TokenNot);
-        AddToken("(", TokenOpenParen);
-        AddToken(")", TokenCloseParen);
-        AddToken("\"", TokenQuote);
-        AddToken("\'", TokenQuote);
-    }
-    Token FindToken(const string& s) {
-        for (Token t : tokens)
-            if (t.getValue() == s)
-                return t;
-        //not enumerated token, initialize as word.
-        return Token(s, TokenWord);
-    }
-    private:
-    void AddToken(const string& token, TokenType type) {
-        tokens.push_back(Token(token, type)); 
-    }
-    vector<Token> tokens;
-};
+#include "../utils/string.h"
+#include "../utils/vector.h"
+#include "tokentype.h"
 
 class TokenStream {
     public:
-    //default constructor to stop the compiler from complaining, don't use this
-    TokenStream() = default;
-    //initialize from string
+    TokenStream(const char* input) : input(input) {}
+    TokenStream(string& input) : input(input.c_str()) {}
+    //take next token -- removes it from the stream
+    Token* TakeToken( );
+    //returns current token
+    Token* CurrentToken( ) {
+        return currentToken;
+    }
+    //returns current token string
+    string CurrentTokenString( ) {
+        return currentTokenString;
+    }
+    //matches token, takes if matched
+    bool match (TokenType type) {
+        if (ReadTokenType() == type)
+            {
+            currentToken = TakeToken();
+            currentTokenString = currentToken->GetValue();
+            return true;
+            }
+        return false;
+    }
+    //matches token
+    private:
+    //requires input to be a c-string, null terminated
+    const char* input;
+    //not the token at input, but the token that was taken last
+    Token* currentToken;
+    //undefined behavior if currentToken is not a word
+    string currentTokenString;
+    TokenType ReadTokenType();
+};
+
+/*
+ //initialize from string
     TokenStream(const string& content, bool string) {
         if (string)
             {
@@ -84,21 +59,53 @@ class TokenStream {
     //initialize from ifstream
     TokenStream ( std::ifstream &stream ) {
         input = std::move(stream);
+    }*/
+
+
+   /*
+   class Token {
+    public:
+    TokenType getType() const {
+        return Type;
     }
-    //get current token
-    Token currentToken( ) {
-        return currentToken_;
+    string getValue() const {
+        return Value;
     }
-    //take next token -- removes it from the stream
-    Token TakeToken( ) {
-        if ( !( input >> currentTokenString_ ) )
-            return Token( "/0", TokenEOF );
-        currentToken_ = Token( table.FindToken( currentTokenString_ ) );
-        return currentToken_;
-    }
+    //default constructor
+    Token() : Value(""), Type(TokenInvalid) {}
+    //constructor
+    Token(const string& v, TokenType t) :  Value(v), Type(t) {}
     private:
-    std::ifstream input;
-    string currentTokenString_;
-    Token currentToken_;
-    TokenTable table;
-};
+    TokenType Type;
+    string Value;
+};*/
+
+/*
+class TokenTable {
+    public:
+    TokenTable() {
+        AddToken("OR", TokenOr);
+        AddToken("|", TokenOr);
+        AddToken("||", TokenOr);
+        AddToken("NOT", TokenNot);
+        AddToken("!", TokenNot);
+        AddToken("(", TokenOpenParen);
+        AddToken(")", TokenCloseParen);
+        AddToken("\"", TokenQuote);
+        AddToken("\'", TokenQuote);
+    }
+    Token FindToken(const string& s) 
+        {
+        for (Token t : tokens)
+            if (t.getValue() == s)
+                return t;
+        //not enumerated token, initialize as word.
+        return Token(s, TokenWord);
+        }
+    private:
+    void AddToken(const string& token, TokenType type) 
+        {
+        tokens.push_back( Token( token, type ) ); 
+        }
+    vector<Token> tokens;
+};*/

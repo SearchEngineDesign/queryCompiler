@@ -1,0 +1,9 @@
+<OrC> ::= <AndC> { <OrOp> <AndC> }
+<OrOp> ::= 'OR' | '|' | '||'
+<AndC> ::= <BaseC> { [ <AndOp> ] <BaseC> }
+<BaseC> ::= <Phrase> | <Paren> |
+<UnaryOp> <BaseC> |
+<SearchWord>
+<UnaryOp> ::= '+' | '-' | 'NOT'
+<Phrase> ::= '"' { <SearchWord> } '"'
+<Paren> ::= '(' <Constraint> ')'
