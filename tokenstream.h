@@ -1,17 +1,17 @@
 #pragma once
 
-#include "../utils/string.h"
+#include "../utils/searchstring.h"
 #include "../utils/vector.h"
 #include "tokentype.h"
 
 class TokenStream {
     public:
-    TokenStream(const char* input) : input(input) {}
-    TokenStream(string& input) : input(input.c_str()) {}
+    TokenStream(char* input) : input(input), currentToken(nullptr), currentTokenString("") {}
+    TokenStream(string& input) : input(input.c_str()), currentToken(nullptr), currentTokenString("") {}
     //take next token -- removes it from the stream
-    Token* TakeToken( );
+    QueryToken* TakeToken( );
     //returns current token
-    Token* CurrentToken( ) {
+    QueryToken* CurrentToken( ) {
         return currentToken;
     }
     //returns current token string
@@ -19,7 +19,8 @@ class TokenStream {
         return currentTokenString;
     }
     //matches token, takes if matched
-    bool match (TokenType type) {
+    bool match (TokenType type) 
+        {
         if (ReadTokenType() == type)
             {
             currentToken = TakeToken();
@@ -27,16 +28,18 @@ class TokenStream {
             return true;
             }
         return false;
-    }
+        }
+    //reads token type at input
+    //MODIFIES: input, gets rid of leading whitespace if needed
+    TokenType ReadTokenType();
     //matches token
     private:
     //requires input to be a c-string, null terminated
-    const char* input;
+    char* input;
     //not the token at input, but the token that was taken last
-    Token* currentToken;
+    QueryToken* currentToken;
     //undefined behavior if currentToken is not a word
     string currentTokenString;
-    TokenType ReadTokenType();
 };
 
 /*

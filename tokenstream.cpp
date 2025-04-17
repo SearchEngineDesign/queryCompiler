@@ -1,53 +1,72 @@
 #include "tokenstream.h"
 #include "tokentype.h"
+#include <iostream>
 
-bool reserved(char c)
+static inline bool reserved(char c)
     {
     return c == '|' || c == '!' || c == '(' || c == ')' || c == '"' || isspace(c);
     }
 
-Token* TokenStream::TakeToken( ) 
+QueryToken* TokenStream::TakeToken( ) 
     {
-    //get rid of leading whitespace
-    while ( isspace( *input ) )
-        input++;
-    if ( *input == '\0' )
-        return new TokenEOF();
-    string t(input[0]);
-    input++;
-    if (t == "(")
-        return new TokenOpenParen();
-    if (t == ")")
-        return new TokenCloseParen();
-    if (t == "\"")
-        return new TokenQuote();
-    if (t == "|") 
-        {
-        //checks both || and |
-        if (input[1] == '|')
+    TokenType type = ReadTokenType();
+    char* test = input;
+    std::cout << "Test: " << test << std::endl;
+   switch (type)
+    {
+    case T_OR:
+        if (input[1] && input[0] == 'O' && input[1] == 'R')
+            input += 2;
+        else if (input[1] && input[0] == '|' && input[1] == '|')
+            input += 2;
+        else
             input++;
         return new TokenOr();
-        }
-    if (t == "!")
+    case T_NOT:
+        if (input[1] && input[2] && input[0] == 'N' && input[1] == 'O' && input[2] == 'T')
+            input += 3;
+        else
+            input++;
         return new TokenNot();
-    //reads word
-    while ( !reserved(*input) )
-        {
-        t += *input;
+    case T_OPEN_PAREN:
         input++;
-        if (t == "OR")
-            return new TokenOr();
-        if (t == "NOT")
-            return new TokenNot();
-        }
-    Token* token = new TokenWord(t);
-    currentToken = token;
-    currentTokenString = t;
-    return token;
+        return new TokenOpenParen();
+    case T_CLOSE_PAREN:
+        input++;
+        return new TokenCloseParen();
+    case T_QUOTE:
+        input++;
+        return new TokenQuote();
+    case T_WORD:
+        string t;
+        while ( *input && !reserved(*input) )
+            {
+            t.push_back(*input);
+            input++;
+            }
+        QueryToken* token = new QueryTokenWord(t);
+        currentToken = token;
+        currentTokenString = t;
+        std::cout << "Found token: " << t << std::endl;
+        return token;
     }
+    return nullptr;
+    }
+
 //read what the token type is at input
 TokenType TokenStream::ReadTokenType()
     {
+    //get rid of leading whitespace (leading whitespace is never useful)
+    while ( *input && isspace( *input ) )
+        input++;
+    if (!input || !*input)
+        return T_EOF;
+    //checks for OR and NOT
+    if (input[1] && input[0] == 'O' && input[1] == 'R')
+        return T_OR;
+    if (input[1] && input[2] && input[0] == 'N' && input[1] == 'O' && input[2] == 'T')
+        return T_NOT;
+    //checks for single character tokens
     char c = *input;
     if (c == '|')
         return T_OR;

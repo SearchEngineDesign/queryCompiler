@@ -1,5 +1,5 @@
 #pragma once
-#include "utils/string.h"
+#include "../utils/searchstring.h"
 
 enum TokenType {
     T_INVALID = -1,
@@ -12,7 +12,7 @@ enum TokenType {
     T_WORD,
 };
 
-class Token {
+class QueryToken {
     public:
     virtual TokenType GetType() const {
         return T_INVALID;
@@ -21,15 +21,15 @@ class Token {
         {
         return "";
         }
-    virtual ~Token() = default;
-    Token() = default;
+    virtual ~QueryToken() = default;
+    QueryToken() = default;
 };
 
-class TokenWord : public Token {
+class QueryTokenWord : public QueryToken {
     private:
     string word;
     public:
-    TokenWord(string val) : word(val) {}
+    QueryTokenWord(string val) : word(val) {}
     TokenType GetType() const override {
         return TokenType::T_WORD;
     }   
@@ -38,42 +38,42 @@ class TokenWord : public Token {
     }
 };
 
-class TokenEOF : public Token {
+class TokenEOF : public QueryToken {
     public:
     TokenType GetType() const override {
         return T_EOF;
     }
 };
 
-class TokenOr : public Token {
+class TokenOr : public QueryToken {
     public:
     TokenType GetType() const override {
         return T_OR;
     }
 };
 
-class TokenNot : public Token {
+class TokenNot : public QueryToken {
     public:
     TokenType GetType() const override {
         return T_NOT;
     }
 };
 
-class TokenOpenParen : public Token {
+class TokenOpenParen : public QueryToken {
     public:
     TokenType GetType() const override {
         return T_OPEN_PAREN;
     }
 };
 
-class TokenCloseParen : public Token {
+class TokenCloseParen : public QueryToken {
     public:
     TokenType GetType() const override {
         return T_CLOSE_PAREN;
     }
 };
 
-class TokenQuote : public Token {
+class TokenQuote : public QueryToken {
     public:
     TokenType GetType() const override {
         return T_QUOTE;

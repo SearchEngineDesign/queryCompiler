@@ -2,51 +2,35 @@
 
 #include "tokenstream.h"
 #include "../isr/isrHandler.h"
-
-class TokenObject
-{
-public:
-    TokenObject *Next;
-    virtual ISR *Compile( );
-    TokenObject( );
-};
-
-class TokenList : TokenObject
-{
-public:
-    TokenObject *Top,
-    *Bottom;
-    void Empty( );
-    void Append( TokenObject *t );
-    TokenList( );
-};
-
 class QueryParser
 {
 public:
-    Token *FindNextToken( );
-    TokenObject *FindOrConstraint( );
-    bool FindOrOp( );
-    TokenObject *FindConstraint( );
-    TokenObject *FindBase( );
-    TokenObject *FindPhrase( );
-    TokenObject *FindParentheses( );
-    TokenObject *FindSearchWord( );
-    //constructor
-    //if string is true, s is a query and gets converted to istream
-    //if string is false, s is a filename that istream reads from
-    QueryParser( string& s, bool string ) {
-        tokenStream = TokenStream(s, string);
+    //constructors
+    QueryParser(char* s) : tokenStream(s), handler() {
+        handler.SetIndexReadHandler(&readHandler);
+    };
+    QueryParser(string& s): tokenStream(s), handler() {
+        handler.SetIndexReadHandler(&readHandler);
+    };
+    void SetIndexReadHandler(string& pathname) { 
+        readHandler.ReadIndex(pathname.c_str());
+        handler.SetIndexReadHandler(&readHandler);
     }
-    //same thing as setting string to false. Initializes istream from filename
-    QueryParser ( string& filename ) {
-        tokenStream = TokenStream(filename);
+    void SetIndexReadHandler(char* pathname) { 
+        readHandler.ReadIndex(pathname);
+        handler.SetIndexReadHandler(&readHandler);
     }
-    //initialize istream from istream
-    QueryParser ( std::ifstream& stream ) {
-        tokenStream = TokenStream(stream);
-    }
+    ISR* OrC( );
+    ISR* AndC( );
+    ISR* BaseC( );
+    ISR* ParenC( );
+    ISR* QuoteC( );
+    bool IsBaseTerm( );
+    
+
 private:
     TokenStream tokenStream;
+    ISRHandler handler;
+    IndexReadHandler readHandler;
 };
 
