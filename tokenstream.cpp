@@ -14,6 +14,8 @@ QueryToken* TokenStream::TakeToken( )
     std::cout << "Test: " << test << std::endl;
    switch (type)
     {
+    case T_EOF:
+        return new TokenEOF();
     case T_OR:
         if (input[1] && input[0] == 'O' && input[1] == 'R')
             input += 2;
@@ -59,7 +61,7 @@ TokenType TokenStream::ReadTokenType()
     //get rid of leading whitespace (leading whitespace is never useful)
     while ( *input && isspace( *input ) )
         input++;
-    if (!input || !*input)
+    if (!input || *input == '\0')
         return T_EOF;
     //checks for OR and NOT
     if (input[1] && input[0] == 'O' && input[1] == 'R')

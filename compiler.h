@@ -20,17 +20,24 @@ public:
         readHandler.ReadIndex(pathname);
         handler.SetIndexReadHandler(&readHandler);
     }
-    ISR* OrC( );
-    ISR* AndC( );
-    ISR* BaseC( );
-    ISR* ParenC( );
-    ISR* QuoteC( );
-    bool IsBaseTerm( );
+    ISRContainer* compile( ) ;
     
 
 private:
     TokenStream tokenStream;
     ISRHandler handler;
     IndexReadHandler readHandler;
+    //compiles the query into an ISRContainer
+    //returns nullptr if there is an error, writes error to cerr
+    //please call the close method on the returned pointer when done
+    //constraints start at OrC and prase recursively down
+    //will parse until NOT or EOF is hit
+    ISR* OrC( );
+    ISR* AndC( );
+    ISR* BaseC( );
+    ISR* ParenC( );
+    ISR* QuoteC( );
+    ISR* wordC( );
+    bool IsBaseTerm( );
 };
 
