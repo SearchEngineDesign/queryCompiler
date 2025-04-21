@@ -12,31 +12,53 @@ bool QueryParser::IsBaseTerm()
 
 //compiles an OR constraint
 //<OrC> ::= <AndC> { <OrOp> <AndC> }
+// ISR* QueryParser::OrC()
+//     {
+//     vector<ISR*> terms;
+//     ISR* andTerm = AndC();
+//     if (andTerm == nullptr)
+//         return nullptr;
+//     terms.push_back(andTerm);
+//     //recursively compiles further OR terms
+//     while ( tokenStream.match(T_OR) )
+//         {
+//         //std::cout << "Gobbled up OR" << std::endl;
+//         ISR* andTerm = AndC();
+//         if (andTerm == nullptr)
+//             throw std::runtime_error("Error: Expected constraint after OR");
+//         terms.push_back(andTerm);
+//         }
+//     //if there is only one term, return it
+//     if (terms.size() == 1)
+//         return terms[0];
+//     //otherwise, compile the OR constraint
+//     return handler.OpenISROr(terms.data(), terms.size());
+//     }
+
 ISR* QueryParser::OrC()
-    {
+{
     vector<ISR*> terms;
     ISR* andTerm = AndC();
     if (andTerm == nullptr) {
-      std::cout << "nullptr in or\n";
-      return nullptr;
+        if (!tokenStream.match(T_OR))
+            return nullptr;
+        andTerm = AndC();
+        if (andTerm == nullptr)
+            throw std::runtime_error("Error: Expected term after OR");
     }
-        return nullptr;
     terms.push_back(andTerm);
-    //recursively compiles further OR terms
-    while ( tokenStream.match(T_OR) )
-        {
-        //std::cout << "Gobbled up OR" << std::endl;
+    
+    while (tokenStream.match(T_OR)) {
         ISR* andTerm = AndC();
         if (andTerm == nullptr)
-            throw std::runtime_error("Error: Expected constraint after OR");
+            throw std::runtime_error("Error: Expected term after OR");
         terms.push_back(andTerm);
-        }
-    //if there is only one term, return it
+    }
+    
     if (terms.size() == 1)
         return terms[0];
-    //otherwise, compile the OR constraint
     return handler.OpenISROr(terms.data(), terms.size());
-    }
+}
 
 //compiles an AND constraint
 //<AndC> ::= <BaseC> { <BaseC> }
@@ -45,7 +67,7 @@ ISR* QueryParser::AndC()
     vector<ISR*> terms;
     ISR* baseTerm = BaseC();
     if (baseTerm == nullptr) {
-      std::cout << "nullptr in and\n";
+    //   std::cout << "nullptr in and\n";
       return nullptr;
     }
       //   return nullptr;
@@ -114,6 +136,7 @@ ISR* QueryParser::ParenC()
 
 //compiles a constraint in quotes
 //<QuoteC> ::= " <wordC> "
+// TODO: shoude directly call phrase, or how do you recognize a phrase or a normal word?
 ISR* QueryParser::QuoteC()
     {
     if (tokenStream.match(T_QUOTE))

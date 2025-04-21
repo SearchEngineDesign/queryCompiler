@@ -4,12 +4,15 @@
 #include "../isr/isrHandler.h"
 int main() {
     // Set the query string directly for testing
-    string query = "lust gluttony !wrath (greed || sloth) !(envy | jealousy)";
+    string query = "lust gluttony !wrath (greed | sloth) !(envy | jealousy)";
+    // string test = "wiki";
 
     // Construct QueryParser with the custom string class
     QueryParser parser(query);
+    string path = "../log/chunks/3";
 
     // Parse the query into an ISR object (using OrC as the top-level entry)
+    parser.SetIndexReadHandler(path);
     ISRContainer* isr = parser.compile();
    
     ISRHandler isrHandler;
