@@ -1,6 +1,6 @@
 #include "compiler.h"
 #include "../isr/isrHandler.h"
-#include "../stemmer/stemmer.h"
+#include "../index/stemmer/stemmer.h"
 #include <stdexcept>
 //#include <iostream>
 
@@ -16,7 +16,10 @@ ISR* QueryParser::OrC()
     {
     vector<ISR*> terms;
     ISR* andTerm = AndC();
-    if (andTerm == nullptr)
+    if (andTerm == nullptr) {
+      std::cout << "nullptr in or\n";
+      return nullptr;
+    }
         return nullptr;
     terms.push_back(andTerm);
     //recursively compiles further OR terms
@@ -41,8 +44,11 @@ ISR* QueryParser::AndC()
     {
     vector<ISR*> terms;
     ISR* baseTerm = BaseC();
-    if (baseTerm == nullptr)
-        return nullptr;
+    if (baseTerm == nullptr) {
+      std::cout << "nullptr in and\n";
+      return nullptr;
+    }
+      //   return nullptr;
     terms.push_back(baseTerm);  
     //recursively compiles further AND terms
     while ( IsBaseTerm() )
@@ -159,9 +165,17 @@ ISRContainer* QueryParser::compile()
         while (tokenStream.ReadTokenType() != T_EOF)
             {
             if (tokenStream.match( T_NOT ) )
-                excluded.push_back(BaseC());
+               {
+               ISR* baseTerm = BaseC();
+               if (baseTerm != nullptr)
+                  excluded.push_back(BaseC());
+               }
             else
-                included.push_back(OrC());
+               {
+               ISR* orTerm = OrC();
+               if (orTerm != nullptr)
+                  included.push_back(OrC());
+               }
             }
         }   
     catch (std::runtime_error& e)
@@ -174,5 +188,7 @@ ISRContainer* QueryParser::compile()
         //std::cerr << "Error: No included constraints" << std::endl;
         return nullptr;
         }
+
+    std::cout << "num of included: " << included.size() << ", num of excluded: " << excluded.size() << std::endl;
     return handler.OpenISRContainer(included.data(), excluded.data(), included.size(), excluded.size());
     }
