@@ -52,11 +52,15 @@ ISR* QueryParser::AndC()
         return nullptr;
     }
       //   return nullptr;
-    terms.push_back(baseTerm);  
+    terms.push_back(baseTerm);
+    //clears AND token
+    tokenStream.match(T_AND);
     //recursively compiles further AND terms
     while ( IsBaseTerm() )
         {
         baseTerm = BaseC();
+        //clears AND token
+        tokenStream.match(T_AND);
         if (baseTerm == nullptr)
             break;
         terms.push_back(baseTerm);
@@ -126,7 +130,7 @@ ISR* QueryParser::QuoteC()
         ISR* constraint = wordC();
         if (constraint == nullptr)
             throw std::runtime_error("Error: Expected constraint after quote");
-        if (tokenStream.match(T_QUOTE))
+        if (!tokenStream.match(T_QUOTE))
             return constraint;
         else
             throw std::runtime_error("Error: Expected close quote after constraint");
@@ -135,26 +139,26 @@ ISR* QueryParser::QuoteC()
         return nullptr;
     }
 
-//compiles an AND constraint of one or more words. JUST WORDS
+//compiles a phrase constraint of one or more words.
 //<wordC> ::= <word> { <word> }
 ISR* QueryParser::wordC()
     {
     if (tokenStream.match(T_WORD))
         {
         vector<ISR*> terms;
-        //std::cout << "Gobbled up word: " << tokenStream.CurrentTokenString() << std::endl;
+        //std::cout << "Gobbled up word in quote: " << tokenStream.CurrentTokenString() << std::endl;
         string w = stemWord( tokenStream.CurrentTokenString() );
         terms.push_back(handler.OpenISRWord( w.c_str() ));
         while (tokenStream.match(T_WORD))
             {
-            //std::cout << "Gobbled up word: " << tokenStream.CurrentTokenString() << std::endl;
+            //std::cout << "Gobbled up word in quote: " << tokenStream.CurrentTokenString() << std::endl;
             string w = stemWord( tokenStream.CurrentTokenString() );
             terms.push_back(handler.OpenISRWord( w.c_str() ));
             }
         if (terms.size() == 1)
             return terms[0];
         else
-            return handler.OpenISRAnd(terms.data(), terms.size());
+            return handler.OpenISRPhrase(terms.data(), terms.size());
         }
     else
         return nullptr;

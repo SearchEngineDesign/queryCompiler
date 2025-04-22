@@ -23,6 +23,14 @@ QueryToken* TokenStream::TakeToken( )
         else
             input++;
         return new TokenOr();
+    case T_AND:
+        if (input[1] && input[2] && input[0] == 'A' && input[1] == 'N' && input[2] == 'D')
+            input += 3;
+        else if (input[1] && input[0] == '&' && input[1] == '&')
+            input += 2;
+        else
+            input++;
+        return new TokenAnd();
     case T_NOT:
         if (input[1] && input[2] && input[0] == 'N' && input[1] == 'O' && input[2] == 'T')
             input += 3;
@@ -62,15 +70,19 @@ TokenType TokenStream::ReadTokenType()
         input++;
     if (!input || *input == '\0')
         return T_EOF;
-    //checks for OR and NOT
+    //checks for OR, NOT and AND
     if (input[1] && input[0] == 'O' && input[1] == 'R')
         return T_OR;
     if (input[1] && input[2] && input[0] == 'N' && input[1] == 'O' && input[2] == 'T')
         return T_NOT;
+    if (input[1] && input[2] && input[0] == 'A' && input[1] == 'N' && input[2] == 'D')
+        return T_AND;
     //checks for single character tokens
     char c = *input;
     if (c == '|')
         return T_OR;
+    if (c == '&')
+        return T_AND;
     if (c == '!')
         return T_NOT;
     if (c == '(')
