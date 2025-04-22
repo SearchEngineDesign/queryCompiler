@@ -200,10 +200,19 @@ ISR* QueryParser::compile()
         std::cout << "num of included: " << included.size() << ", num of excluded: " << excluded.size() << std::endl;
         std::cout << "--------------------------------" << std::endl;
     }
-
-    if ( included.size() == 0 && excluded.size() != 0 )
+    //if there is only one included constraint, return it
+    if ( included.size() == 1 && excluded.size() == 0 )
+        return included[0];
+    //if there is only one excluded constraint, just search for it. User also shouldn't do this.
+    if (excluded.size() == 1 && included.size() == 0)
+        return excluded[0];
+    //if there are multiple excluded constraints and no included constraints, return an AND constraint
+    //of the excluded constraints. But the user shouldn't do this.
+    if ( included.size() == 0 && excluded.size() > 1 )
         return handler.OpenISRAnd(excluded.data(), excluded.size());
-    else if ( excluded.size() == 0 && included.size() != 0 )
+    //if there are multiple included constraints and no excluded constraints, return an OR constraint
+    //of the included constraints. This also should never happen?
+    if ( excluded.size() > 1 && included.size() != 0 )
         return handler.OpenISRAnd(included.data(), included.size());
 
     return handler.OpenISRContainer(included.data(), excluded.data(), included.size(), excluded.size());
