@@ -5,6 +5,7 @@ enum TokenType {
     T_INVALID = -1,
     T_EOF = 0,
     T_OR,
+    T_AND,
     T_NOT,
     T_OPEN_PAREN,
     T_CLOSE_PAREN,
@@ -49,6 +50,13 @@ class TokenOr : public QueryToken {
     public:
     TokenType GetType() const override {
         return T_OR;
+    }
+};
+
+class TokenAnd : public QueryToken {
+    public:
+    TokenType GetType() const override {
+        return T_AND;
     }
 };
 
