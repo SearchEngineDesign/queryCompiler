@@ -11,7 +11,6 @@ QueryToken* TokenStream::TakeToken( )
     {
     TokenType type = ReadTokenType();
     char* test = input;
-    std::cout << "Test: " << test << std::endl;
    switch (type)
     {
     case T_EOF:

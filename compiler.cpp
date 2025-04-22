@@ -12,28 +12,6 @@ bool QueryParser::IsBaseTerm()
 
 //compiles an OR constraint
 //<OrC> ::= <AndC> { <OrOp> <AndC> }
-// ISR* QueryParser::OrC()
-//     {
-//     vector<ISR*> terms;
-//     ISR* andTerm = AndC();
-//     if (andTerm == nullptr)
-//         return nullptr;
-//     terms.push_back(andTerm);
-//     //recursively compiles further OR terms
-//     while ( tokenStream.match(T_OR) )
-//         {
-//         //std::cout << "Gobbled up OR" << std::endl;
-//         ISR* andTerm = AndC();
-//         if (andTerm == nullptr)
-//             throw std::runtime_error("Error: Expected constraint after OR");
-//         terms.push_back(andTerm);
-//         }
-//     //if there is only one term, return it
-//     if (terms.size() == 1)
-//         return terms[0];
-//     //otherwise, compile the OR constraint
-//     return handler.OpenISROr(terms.data(), terms.size());
-//     }
 
 ISR* QueryParser::OrC()
 {
@@ -41,10 +19,13 @@ ISR* QueryParser::OrC()
     ISR* andTerm = AndC();
     if (andTerm == nullptr) {
         if (!tokenStream.match(T_OR))
+            {
+            // std::cout << "OrC returned nullptr" << std::endl;
             return nullptr;
+            }
         andTerm = AndC();
         if (andTerm == nullptr)
-            throw std::runtime_error("Error: Expected term after OR");
+            return nullptr;
     }
     terms.push_back(andTerm);
     
@@ -67,8 +48,8 @@ ISR* QueryParser::AndC()
     vector<ISR*> terms;
     ISR* baseTerm = BaseC();
     if (baseTerm == nullptr) {
-    //   std::cout << "nullptr in and\n";
-      return nullptr;
+        // std::cout << "nullptr in and\n";
+        return nullptr;
     }
       //   return nullptr;
     terms.push_back(baseTerm);  
@@ -179,7 +160,7 @@ ISR* QueryParser::wordC()
         return nullptr;
     }
 
-ISRContainer* QueryParser::compile()
+ISR* QueryParser::compile()
     {
     vector<ISR*> included;
     vector<ISR*> excluded;
@@ -191,27 +172,35 @@ ISRContainer* QueryParser::compile()
                {
                ISR* baseTerm = BaseC();
                if (baseTerm != nullptr)
-                  excluded.push_back(BaseC());
+                  excluded.push_back(baseTerm);
                }
             else
                {
                ISR* orTerm = OrC();
                if (orTerm != nullptr)
-                  included.push_back(OrC());
+                  included.push_back(orTerm);
                }
             }
         }   
     catch (std::runtime_error& e)
         {
-        //std::cerr << e.what() << std::endl;
+        std::cerr << e.what() << std::endl;
         return nullptr;
         }
-    if (included.size() == 0)
+    if (included.size() == 0 && excluded.size() == 0)
         {
-        //std::cerr << "Error: No included constraints" << std::endl;
+        std::cerr << "Error: No included constraints" << std::endl;
         return nullptr;
         }
+    else{
+        std::cout << "num of included: " << included.size() << ", num of excluded: " << excluded.size() << std::endl;
+        std::cout << "--------------------------------" << std::endl;
+    }
 
-    std::cout << "num of included: " << included.size() << ", num of excluded: " << excluded.size() << std::endl;
+    if ( included.size() == 0 && excluded.size() != 0 )
+        return handler.OpenISRAnd(excluded.data(), excluded.size());
+    else if ( excluded.size() == 0 && included.size() != 0 )
+        return handler.OpenISRAnd(included.data(), included.size());
+
     return handler.OpenISRContainer(included.data(), excluded.data(), included.size(), excluded.size());
     }

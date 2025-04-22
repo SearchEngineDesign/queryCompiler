@@ -20,7 +20,7 @@ public:
         readHandler.ReadIndex(pathname);
         handler.SetIndexReadHandler(&readHandler);
     }
-    ISRContainer* compile( ) ;
+    ISR* compile( ) ;
     
 
 private:
