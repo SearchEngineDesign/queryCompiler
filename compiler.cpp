@@ -83,11 +83,15 @@ ISR* QueryParser::AndC()
 //finds base constraint (parentheses, quotes, words, NOT)
 ISR* QueryParser::BaseC()
     {
-    if ( tokenStream.match( T_WORD ) )
+    if (tokenStream.match(T_WORD))
         {
-        //std::cout << "Gobbled up word: " << tokenStream.CurrentTokenString() << std::endl;
-        string w = stemWord( tokenStream.CurrentTokenString() );
-        return handler.OpenISRWord( w.c_str() );
+        string w = stemWord(tokenStream.CurrentTokenString());
+        ISRWord* word = handler.OpenISRWord(w.c_str());
+        if (word != nullptr) {
+            // Only store basic ISRWord, not composite structures
+            flattenedWords.push_back(word);
+        }
+        return word;
         }
     else if ( tokenStream.ReadTokenType() == T_OPEN_PAREN )
         {
@@ -107,6 +111,7 @@ ISR* QueryParser::BaseC()
     else
         return nullptr;
     }
+
 
 //compiles a constraint in parentheses
 //<ParenC> ::= ( <OrC> )
@@ -156,12 +161,19 @@ ISR* QueryParser::wordC()
         vector<ISR*> terms;
         //std::cout << "Gobbled up word in quote: " << tokenStream.CurrentTokenString() << std::endl;
         string w = stemWord( tokenStream.CurrentTokenString() );
-        terms.push_back(handler.OpenISRWord( w.c_str() ));
+        ISRWord* word = handler.OpenISRWord(w.c_str());
+        if (word != nullptr) {
+            flattenedWords.push_back(word);
+            terms.push_back(word);
+        }
         while (tokenStream.match(T_WORD))
             {
-            //std::cout << "Gobbled up word in quote: " << tokenStream.CurrentTokenString() << std::endl;
-            string w = stemWord( tokenStream.CurrentTokenString() );
-            terms.push_back(handler.OpenISRWord( w.c_str() ));
+            string w = stemWord(tokenStream.CurrentTokenString());
+            ISRWord* word = handler.OpenISRWord(w.c_str());
+            if (word != nullptr) {
+                flattenedWords.push_back(word);
+                terms.push_back(word);
+            }
             }
         if (terms.size() == 1)
             return terms[0];
@@ -182,11 +194,13 @@ ISR* QueryParser::compile()
     {
     vector<ISR*> included;
     vector<ISR*> excluded;
+    flattenedWords.clear();  // Clear any previous words
+    
     try 
         {
         while (tokenStream.ReadTokenType() != T_EOF)
             {
-            if (tokenStream.match( T_NOT ) )
+            if (tokenStream.match(T_NOT))
                {
                ISR* baseTerm = BaseC();
                if (baseTerm != nullptr)
@@ -213,10 +227,11 @@ ISR* QueryParser::compile()
     else
         {
         std::cout << "num of included: " << included.size() << ", num of excluded: " << excluded.size() << std::endl;
+        std::cout << "num of flattened words: " << flattenedWords.size() << std::endl;
         std::cout << "--------------------------------" << std::endl;
         }
 
-    if ( excluded.size() == 0 )
+    if (excluded.size() == 0)
         {
             if (included.size() == 1)
                 return included[0];

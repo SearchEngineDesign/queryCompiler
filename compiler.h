@@ -2,6 +2,7 @@
 
 #include "tokenstream.h"
 #include "../isr/isrHandler.h"
+#include "../isr/isr.h"
 class QueryParser
 {
 public:
@@ -22,11 +23,15 @@ public:
     }
     ISR* compile( ) ;
     
+    // Getter for flattenedWords
+    const vector<ISRWord*>& getFlattenedWords() const { return flattenedWords; }
 
 private:
     TokenStream tokenStream;
     ISRHandler handler;
     IndexReadHandler readHandler;
+    vector<ISRWord*> flattenedWords;
+    
     //compiles the query into an ISRContainer
     //returns nullptr if there is an error, writes error to cerr
     //please call the close method on the returned pointer when done
