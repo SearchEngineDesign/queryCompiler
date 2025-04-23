@@ -38,7 +38,11 @@ ISR* QueryParser::OrC()
     
     if (terms.size() == 1)
         return terms[0];
-    return handler.OpenISROr(terms.data(), terms.size());
+    //allocate a dynamic array for terms
+    ISR** termsArray = new ISR*[terms.size()];
+    for (size_t i = 0; i < terms.size(); i++)
+        termsArray[i] = terms[i];
+    return handler.OpenISROr(termsArray, terms.size());
 }
 
 //compiles an AND constraint
@@ -68,8 +72,12 @@ ISR* QueryParser::AndC()
     //if there is only one term, return it
     if (terms.size() == 1)
         return terms[0];
+    //allocate a dynamic array for terms
+    ISR** termsArray = new ISR*[terms.size()];
+    for (size_t i = 0; i < terms.size(); i++)
+        termsArray[i] = terms[i];
     //otherwise, compile the AND constraint
-    return handler.OpenISRAnd(terms.data(), terms.size());
+    return handler.OpenISRAnd(termsArray, terms.size());
     }
 
 //finds base constraint (parentheses, quotes, words, NOT)
@@ -158,7 +166,13 @@ ISR* QueryParser::wordC()
         if (terms.size() == 1)
             return terms[0];
         else
-            return handler.OpenISRPhrase(terms.data(), terms.size());
+            {
+            //allocate a dynamic array for terms
+            ISR** termsArray = new ISR*[terms.size()];
+            for (size_t i = 0; i < terms.size(); i++)
+                termsArray[i] = terms[i];
+            return handler.OpenISRPhrase(termsArray, terms.size());
+            }
         }
     else
         return nullptr;

@@ -4,7 +4,7 @@
 #include "../isr/isrHandler.h"
 int main() {
     // Set the query string directly for testing
-    string query = "university OR michigan";
+    string query = "wikipedia OR new";
     // string test = "wiki";
 
     // Construct QueryParser with the custom string class
