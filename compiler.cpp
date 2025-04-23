@@ -87,9 +87,15 @@ ISR* QueryParser::BaseC()
         {
         string w = stemWord(tokenStream.CurrentTokenString());
         ISRWord* word = handler.OpenISRWord(w.c_str());
+        string titleStr(string("@") + w);
+        ISRWord* title = handler.OpenISRWord(titleStr.c_str());
+
         if (word != nullptr) {
             // Only store basic ISRWord, not composite structures
             flattenedWords.push_back(word);
+        }
+        if (title != nullptr) {
+            flattenedTitles.push_back(title);
         }
         return word;
         }
@@ -162,17 +168,28 @@ ISR* QueryParser::wordC()
         //std::cout << "Gobbled up word in quote: " << tokenStream.CurrentTokenString() << std::endl;
         string w = stemWord( tokenStream.CurrentTokenString() );
         ISRWord* word = handler.OpenISRWord(w.c_str());
+        string titleStr(string("@") + w);
+        ISRWord* title = handler.OpenISRWord(titleStr.c_str());
         if (word != nullptr) {
             flattenedWords.push_back(word);
             terms.push_back(word);
+        }
+        if (title != nullptr) {
+            flattenedTitles.push_back(title);
         }
         while (tokenStream.match(T_WORD))
             {
             string w = stemWord(tokenStream.CurrentTokenString());
             ISRWord* word = handler.OpenISRWord(w.c_str());
-            if (word != nullptr) {
+            string titleStr(string("@") + w);
+            ISRWord* title = handler.OpenISRWord(titleStr.c_str());
+            if (word != nullptr)
+                {
                 flattenedWords.push_back(word);
                 terms.push_back(word);
+                }
+            if (title != nullptr) {
+                flattenedTitles.push_back(title);
             }
             }
         if (terms.size() == 1)
@@ -195,7 +212,8 @@ ISR* QueryParser::compile()
     vector<ISR*> included;
     vector<ISR*> excluded;
     flattenedWords.clear();  // Clear any previous words
-    
+    flattenedTitles.clear();
+
     try 
         {
         while (tokenStream.ReadTokenType() != T_EOF)
@@ -228,6 +246,7 @@ ISR* QueryParser::compile()
         {
         std::cout << "num of included: " << included.size() << ", num of excluded: " << excluded.size() << std::endl;
         std::cout << "num of flattened words: " << flattenedWords.size() << std::endl;
+        std::cout << "num of flattened titles: " << flattenedTitles.size() << std::endl;
         std::cout << "--------------------------------" << std::endl;
         }
 

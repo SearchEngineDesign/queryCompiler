@@ -25,12 +25,14 @@ public:
     
     // Getter for flattenedWords
     const vector<ISRWord*>& getFlattenedWords() const { return flattenedWords; }
-
+    const vector<ISRWord*>& getFlattenedTitles() const { return flattenedTitles; }
+    
 private:
     TokenStream tokenStream;
     ISRHandler handler;
     IndexReadHandler readHandler;
     vector<ISRWord*> flattenedWords;
+    vector<ISRWord*> flattenedTitles;
     
     //compiles the query into an ISRContainer
     //returns nullptr if there is an error, writes error to cerr
