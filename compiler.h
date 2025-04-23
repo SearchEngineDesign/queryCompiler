@@ -17,7 +17,7 @@ public:
         readHandler.ReadIndex(pathname.c_str());
         handler.SetIndexReadHandler(&readHandler);
     }
-    void SetIndexReadHandler(char* pathname) { 
+    void SetIndexReadHandler(const char* pathname) { 
         readHandler.ReadIndex(pathname);
         handler.SetIndexReadHandler(&readHandler);
     }
