@@ -209,8 +209,10 @@ ISR* QueryParser::wordC()
 
 ISR* QueryParser::compile()
     {
-    vector<ISR*> included;
-    vector<ISR*> excluded;
+    // vector<ISR*> included;
+    // vector<ISR*> excluded;
+    included.clear();
+    excluded.clear();
     flattenedWords.clear();  // Clear any previous words
     flattenedTitles.clear();
 

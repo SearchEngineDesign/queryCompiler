@@ -35,6 +35,8 @@ private:
     IndexReadHandler readHandler;
     vector<ISRWord*> flattenedWords;
     vector<ISRWord*> flattenedTitles;
+    vector<ISR*> included;
+    vector<ISR*> excluded;
     
     //compiles the query into an ISRContainer
     //returns nullptr if there is an error, writes error to cerr

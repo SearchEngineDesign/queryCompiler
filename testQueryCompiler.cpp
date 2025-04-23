@@ -4,7 +4,7 @@
 #include "../isr/isrHandler.h"
 int main() {
     // Set the query string directly for testing
-    string query = "wikipedia !new (wiki | smart)";
+    string query = "wikipedia !city wiki";
     // string test = "wiki";
 
     // Construct QueryParser with the custom string class
@@ -17,9 +17,9 @@ int main() {
     const vector<ISRWord*>& flattenedWords = parser.getFlattenedWords();
     const vector<ISRWord*>& flattenedTitles = parser.getFlattenedTitles();
 
-    for (const auto& word : flattenedWords) {
-        std::cout << "Flattened word: " << word << std::endl;
-    }
+    // for (const auto& word : flattenedWords) {
+    //     std::cout << "Flattened word: " << word << std::endl;
+    // }
 
    
     // Seek through results and output matching documents
