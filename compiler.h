@@ -21,12 +21,14 @@ public:
         readHandler.ReadIndex(pathname);
         handler.SetIndexReadHandler(&readHandler);
     }
+
+    IndexReadHandler& getIndexReadHandler() { return readHandler; }
     ISR* compile( ) ;
     
     // Getter for flattenedWords
     const vector<ISRWord*>& getFlattenedWords() const { return flattenedWords; }
     const vector<ISRWord*>& getFlattenedTitles() const { return flattenedTitles; }
-    
+
 private:
     TokenStream tokenStream;
     ISRHandler handler;
