@@ -48,13 +48,13 @@ ISR* QueryParser::AndC()
     vector<ISR*> terms;
     ISR* baseTerm = BaseC();
     if (baseTerm == nullptr) {
-        // std::cout << "nullptr in and\n";
+        std::cout << "Warning: First term in AND is nullptr" << std::endl;
         return nullptr;
     }
-      //   return nullptr;
     terms.push_back(baseTerm);
     //clears AND token
     tokenStream.match(T_AND);
+    
     //recursively compiles further AND terms
     while ( IsBaseTerm() )
         {
@@ -130,7 +130,7 @@ ISR* QueryParser::QuoteC()
         ISR* constraint = wordC();
         if (constraint == nullptr)
             throw std::runtime_error("Error: Expected constraint after quote");
-        if (!tokenStream.match(T_QUOTE))
+        if (tokenStream.match(T_QUOTE))
             return constraint;
         else
             throw std::runtime_error("Error: Expected close quote after constraint");
@@ -191,20 +191,24 @@ ISR* QueryParser::compile()
         std::cerr << e.what() << std::endl;
         return nullptr;
         }
-    if (included.size() == 0 && excluded.size() == 0)
+    if (included.size() == 0)
         {
         std::cerr << "Error: No included constraints" << std::endl;
         return nullptr;
         }
-    else{
+    else
+        {
         std::cout << "num of included: " << included.size() << ", num of excluded: " << excluded.size() << std::endl;
         std::cout << "--------------------------------" << std::endl;
-    }
+        }
 
-    if ( included.size() == 0 && excluded.size() != 0 )
-        return handler.OpenISRAnd(excluded.data(), excluded.size());
-    else if ( excluded.size() == 0 && included.size() != 0 )
-        return handler.OpenISRAnd(included.data(), included.size());
+    if ( excluded.size() == 0 )
+        {
+            if (included.size() == 1)
+                return included[0];
+            else
+                return handler.OpenISRAnd(included.data(), included.size());
+        }
 
     return handler.OpenISRContainer(included.data(), excluded.data(), included.size(), excluded.size());
     }
