@@ -23,11 +23,13 @@ public:
     }
 
     IndexReadHandler& getIndexReadHandler() { return readHandler; }
+    ISRHandler& getISRHandler() { return handler; }
+    
     ISR* compile( ) ;
     
     // Getter for flattenedWords
-    const vector<ISRWord*>& getFlattenedWords() const { return flattenedWords; }
-    const vector<ISRWord*>& getFlattenedTitles() const { return flattenedTitles; }
+    vector<ISRWord*> & getFlattenedWords() { return flattenedWords; }
+    vector<ISRWord*>& getFlattenedTitles() { return flattenedTitles; }
 
 private:
     TokenStream tokenStream;
