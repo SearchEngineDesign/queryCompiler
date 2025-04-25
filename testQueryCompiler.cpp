@@ -9,10 +9,14 @@ int main() {
 
     // Construct QueryParser with the custom string class
     QueryParser parser(query);
-    string path = "../log/chunks/8";
+    string path = "../log/chunks/30";
 
     // Parse the query into an ISR object (using OrC as the top-level entry)
     parser.SetIndexReadHandler(path);
+    vector<string> tokenStrings = parser.getTokenStrings();
+    for (const auto& token : tokenStrings) {
+        std::cout << "Token: " << token << std::endl;
+    }
     ISR* isr = parser.compile();
     const vector<ISRWord*>& flattenedWords = parser.getFlattenedWords();
     const vector<ISRWord*>& flattenedTitles = parser.getFlattenedTitles();

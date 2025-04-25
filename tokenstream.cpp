@@ -12,53 +12,67 @@ QueryToken* TokenStream::TakeToken( )
     TokenType type = ReadTokenType();
     char* test = input;
    switch (type)
-    {
-    case T_EOF:
-        return new TokenEOF();
-    case T_OR:
-        if (input[1] && input[0] == 'O' && input[1] == 'R')
-            input += 2;
-        else if (input[1] && input[0] == '|' && input[1] == '|')
-            input += 2;
-        else
+        {
+        case T_EOF:
+            currentToken = new TokenEOF();
+            currentTokenString = "\0";
+            return currentToken;
+        case T_OR:
+            if (input[1] && input[0] == 'O' && input[1] == 'R')
+                input += 2;
+            else if (input[1] && input[0] == '|' && input[1] == '|')
+                input += 2;
+            else
+                input++;
+            currentToken = new TokenOr();
+            currentTokenString = "\0";
+            return currentToken;
+        case T_AND:
+            if (input[1] && input[2] && input[0] == 'A' && input[1] == 'N' && input[2] == 'D')
+                input += 3;
+            else if (input[1] && input[0] == '&' && input[1] == '&')
+                input += 2;
+            else
+                input++;
+            currentToken = new TokenAnd();
+            currentTokenString = "\0";
+            return currentToken;
+        case T_NOT:
+            if (input[1] && input[2] && input[0] == 'N' && input[1] == 'O' && input[2] == 'T')
+                input += 3;
+            else
+                input++;
+            currentToken = new TokenNot();
+            currentTokenString = "\0";
+            return currentToken;
+        case T_OPEN_PAREN:
             input++;
-        return new TokenOr();
-    case T_AND:
-        if (input[1] && input[2] && input[0] == 'A' && input[1] == 'N' && input[2] == 'D')
-            input += 3;
-        else if (input[1] && input[0] == '&' && input[1] == '&')
-            input += 2;
-        else
+            currentToken = new TokenOpenParen();
+            currentTokenString = "\0";
+            return currentToken;
+        case T_CLOSE_PAREN:
             input++;
-        return new TokenAnd();
-    case T_NOT:
-        if (input[1] && input[2] && input[0] == 'N' && input[1] == 'O' && input[2] == 'T')
-            input += 3;
-        else
+            currentToken = new TokenCloseParen();
+            currentTokenString = "\0";
+            return currentToken;
+        case T_QUOTE:
             input++;
-        return new TokenNot();
-    case T_OPEN_PAREN:
-        input++;
-        return new TokenOpenParen();
-    case T_CLOSE_PAREN:
-        input++;
-        return new TokenCloseParen();
-    case T_QUOTE:
-        input++;
-        return new TokenQuote();
-    case T_WORD:
-        string t;
-        while ( *input && !reserved(*input) )
-            {
-            t.push_back(*input);
-            input++;
-            }
-        QueryToken* token = new QueryTokenWord(t);
-        currentToken = token;
-        currentTokenString = t;
-        std::cout << "Found token: " << t << std::endl;
-        return token;
-    }
+            currentToken = new TokenQuote();
+            currentTokenString = "\0";
+            return currentToken;
+        case T_WORD:
+            string t;
+            while ( *input && !reserved(*input) )
+                {
+                t.push_back(*input);
+                input++;
+                }
+            QueryToken* token = new QueryTokenWord(t);
+            currentToken = token;
+            currentTokenString = t;
+            //std::cout << "Found token: " << t << std::endl;
+            return token;
+        }
     return nullptr;
     }
 

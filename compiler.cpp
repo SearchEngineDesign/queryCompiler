@@ -207,16 +207,16 @@ ISR* QueryParser::wordC()
         return nullptr;
     }
 
-vector<string> QueryParser::getTokenStrings() {
+vector<string> QueryParser::getTokenStrings() 
+    {
     vector<string> tokenStrings;
     char* query = strdup( tokenStream.getQuery() );
-    while ( tokenStream.ReadTokenType() != T_EOF )
+    while ( tokenStream.TakeToken()->GetType() != T_EOF )
         if ( tokenStream.CurrentToken()->GetType() == T_WORD )
             tokenStrings.push_back( tokenStream.CurrentTokenString() );
     tokenStream.setQuery( query );
-    free( query );
     return tokenStrings;
-}
+    }
 
 
 ISR* QueryParser::compile()
