@@ -31,6 +31,8 @@ public:
     vector<ISRWord*> & getFlattenedWords() { return flattenedWords; }
     vector<ISRWord*>& getFlattenedTitles() { return flattenedTitles; }
 
+    vector<string> getTokenStrings();
+
 private:
     TokenStream tokenStream;
     ISRHandler handler;
