@@ -18,6 +18,14 @@ class TokenStream {
     string CurrentTokenString( ) {
         return currentTokenString;
     }
+    //@returns: the query string
+    char* getQuery() {
+        return input;
+    }
+    //@param: the query string
+    void setQuery(char* query) {
+        input = query;
+    }
     //matches token, takes if matched
     bool match (TokenType type) 
         {
