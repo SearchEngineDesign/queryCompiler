@@ -1,6 +1,6 @@
 #include "compiler.h"
 #include <iostream>
-#include "../utils/searchstring.h"
+#include <cf/searchstring.h>
 #include "../isr/isrHandler.h"
 int main() {
     // Set the query string directly for testing
