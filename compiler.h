@@ -3,6 +3,7 @@
 #include "tokenstream.h"
 #include "../isr/isrHandler.h"
 #include "../isr/isr.h"
+#include "stopwords.h"
 class QueryParser
 {
 public:
