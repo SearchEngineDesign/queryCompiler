@@ -7,10 +7,10 @@ class QueryParser
 {
 public:
     //constructors
-    QueryParser(char* s) : tokenStream(s), handler() {
+    QueryParser(char* s, char type) : tokenStream(s), handler(), type(type) {
         handler.SetIndexReadHandler(&readHandler);
     };
-    QueryParser(string& s): tokenStream(s), handler() {
+    QueryParser(string& s, char type): tokenStream(s), handler(), type(type) {
         handler.SetIndexReadHandler(&readHandler);
     };
     void SetIndexReadHandler(string& pathname) { 
@@ -31,8 +31,6 @@ public:
     vector<ISRWord*> & getFlattenedWords() { return flattenedWords; }
     vector<ISRWord*>& getFlattenedTitles() { return flattenedTitles; }
 
-    vector<string> getTokenStrings();
-
 private:
     TokenStream tokenStream;
     ISRHandler handler;
@@ -41,6 +39,7 @@ private:
     vector<ISRWord*> flattenedTitles;
     vector<ISR*> included;
     vector<ISR*> excluded;
+    char type;
     
     //compiles the query into an ISRContainer
     //returns nullptr if there is an error, writes error to cerr
@@ -55,4 +54,3 @@ private:
     ISR* wordC( );
     bool IsBaseTerm( );
 };
-

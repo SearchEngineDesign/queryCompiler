@@ -4,19 +4,15 @@
 #include "../isr/isrHandler.h"
 int main() {
     // Set the query string directly for testing
-    string query = "wikipedia !city wiki";
+    string query = "";
     // string test = "wiki";
 
     // Construct QueryParser with the custom string class
-    QueryParser parser(query);
-    string path = "../log/chunks/30";
+    QueryParser parser(query, 'b');
+    string path = "../log/chunks/31";
 
     // Parse the query into an ISR object (using OrC as the top-level entry)
     parser.SetIndexReadHandler(path);
-    vector<string> tokenStrings = parser.getTokenStrings();
-    for (const auto& token : tokenStrings) {
-        std::cout << "Token: " << token << std::endl;
-    }
     ISR* isr = parser.compile();
     const vector<ISRWord*>& flattenedWords = parser.getFlattenedWords();
     const vector<ISRWord*>& flattenedTitles = parser.getFlattenedTitles();
@@ -24,7 +20,8 @@ int main() {
     // for (const auto& word : flattenedWords) {
     //     std::cout << "Flattened word: " << word << std::endl;
     // }
-
+   if (isr == nullptr)
+      return 0;
    
     // Seek through results and output matching documents
     int i = 0;

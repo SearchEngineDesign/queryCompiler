@@ -51,10 +51,6 @@ ISR* QueryParser::AndC()
     {
     vector<ISR*> terms;
     ISR* baseTerm = BaseC();
-    if (baseTerm == nullptr) {
-        std::cout << "Warning: First term in AND is nullptr" << std::endl;
-        return nullptr;
-    }
     terms.push_back(baseTerm);
     //clears AND token
     tokenStream.match(T_AND);
@@ -65,8 +61,6 @@ ISR* QueryParser::AndC()
         baseTerm = BaseC();
         //clears AND token
         tokenStream.match(T_AND);
-        if (baseTerm == nullptr)
-            break;
         terms.push_back(baseTerm);
         }
     //if there is only one term, return it
@@ -74,8 +68,14 @@ ISR* QueryParser::AndC()
         return terms[0];
     //allocate a dynamic array for terms
     ISR** termsArray = new ISR*[terms.size()];
-    for (size_t i = 0; i < terms.size(); i++)
-        termsArray[i] = terms[i];
+    for (size_t i = 0; i < terms.size(); i++) {
+      termsArray[i] = terms[i];
+      if (terms[i] == nullptr)
+         {
+         delete[] termsArray;
+         return nullptr;
+         }
+    }
     //otherwise, compile the AND constraint
     return handler.OpenISRAnd(termsArray, terms.size());
     }
@@ -97,7 +97,13 @@ ISR* QueryParser::BaseC()
         if (title != nullptr) {
             flattenedTitles.push_back(title);
         }
-        return word;
+        if (type == 'b') {
+            return word;
+        }
+        else if (type == 't') {
+            return title;
+        }
+        return nullptr;
         }
     else if ( tokenStream.ReadTokenType() == T_OPEN_PAREN )
         {
@@ -170,13 +176,18 @@ ISR* QueryParser::wordC()
         ISRWord* word = handler.OpenISRWord(w.c_str());
         string titleStr(string("@") + w);
         ISRWord* title = handler.OpenISRWord(titleStr.c_str());
-        if (word != nullptr) {
+        if (word != nullptr)
+            {
             flattenedWords.push_back(word);
-            terms.push_back(word);
-        }
-        if (title != nullptr) {
+            if (type == 'b')
+                terms.push_back(word);
+            }
+        if (title != nullptr)
+            {
             flattenedTitles.push_back(title);
-        }
+            if (type == 't')
+                terms.push_back(title);
+            }
         while (tokenStream.match(T_WORD))
             {
             string w = stemWord(tokenStream.CurrentTokenString());
@@ -186,11 +197,15 @@ ISR* QueryParser::wordC()
             if (word != nullptr)
                 {
                 flattenedWords.push_back(word);
-                terms.push_back(word);
+                if (type == 'b')
+                    terms.push_back(word);
                 }
-            if (title != nullptr) {
+            if (title != nullptr)
+                {
                 flattenedTitles.push_back(title);
-            }
+                if (type == 't')
+                    terms.push_back(title);
+                }
             }
         if (terms.size() == 1)
             return terms[0];
@@ -206,18 +221,6 @@ ISR* QueryParser::wordC()
     else
         return nullptr;
     }
-
-vector<string> QueryParser::getTokenStrings() 
-    {
-    vector<string> tokenStrings;
-    char* query = strdup( tokenStream.getQuery() );
-    while ( tokenStream.TakeToken()->GetType() != T_EOF )
-        if ( tokenStream.CurrentToken()->GetType() == T_WORD )
-            tokenStrings.push_back( tokenStream.CurrentTokenString() );
-    tokenStream.setQuery( query );
-    return tokenStrings;
-    }
-
 
 ISR* QueryParser::compile()
     {
