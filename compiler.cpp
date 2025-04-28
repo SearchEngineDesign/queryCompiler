@@ -64,6 +64,10 @@ ISR* QueryParser::AndC()
         terms.push_back(baseTerm);
         }
     //if there is only one term, return it
+      if (terms.size() == 1 && terms[0] == nullptr)
+        return nullptr;
+      else if (terms.size() == 1)
+         return terms[0];
     if (terms.size() == 1)
         return terms[0];
     //allocate a dynamic array for terms
