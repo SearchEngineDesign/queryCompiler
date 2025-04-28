@@ -9,18 +9,20 @@ class QueryParser
 public:
     //constructors
     QueryParser(char* s, char type) : tokenStream(s), handler(), type(type) {
-        handler.SetIndexReadHandler(&readHandler);
+        handler.SetIndexReadHandlerPtr(&readHandler);
     };
     QueryParser(string& s, char type): tokenStream(s), handler(), type(type) {
-        handler.SetIndexReadHandler(&readHandler);
+        handler.SetIndexReadHandlerPtr(&readHandler);
     };
-    void SetIndexReadHandler(string& pathname) { 
-        readHandler.ReadIndex(pathname.c_str());
-        handler.SetIndexReadHandler(&readHandler);
+    int SetIndexReadHandler(string& pathname) { 
+        int ret = readHandler.ReadIndex(pathname.c_str());
+        handler.SetIndexReadHandlerPtr(&readHandler);
+        return ret;
     }
-    void SetIndexReadHandler(const char* pathname) { 
-        readHandler.ReadIndex(pathname);
-        handler.SetIndexReadHandler(&readHandler);
+    int SetIndexReadHandler(const char* pathname) { 
+        int ret = readHandler.ReadIndex(pathname);
+        handler.SetIndexReadHandlerPtr(&readHandler);
+        return ret;
     }
 
     IndexReadHandler& getIndexReadHandler() { return readHandler; }
