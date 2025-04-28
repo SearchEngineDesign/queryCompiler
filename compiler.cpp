@@ -68,6 +68,7 @@ ISR* QueryParser::AndC()
         return terms[0];
     //allocate a dynamic array for terms
     ISR** termsArray = new ISR*[terms.size()];
+
     for (size_t i = 0; i < terms.size(); i++) {
       termsArray[i] = terms[i];
       if (terms[i] == nullptr)
@@ -76,6 +77,7 @@ ISR* QueryParser::AndC()
          return nullptr;
          }
     }
+
     //otherwise, compile the AND constraint
     return handler.OpenISRAnd(termsArray, terms.size());
     }
@@ -85,7 +87,12 @@ ISR* QueryParser::BaseC()
     {
     if (tokenStream.match(T_WORD))
         {
-        string w = stemWord(tokenStream.CurrentTokenString());
+        string w =  tokenStream.CurrentTokenString();
+        w = standardize(w);
+        std::cout << "w: " << w.c_str() << std::endl;
+        if (StopWords::isStopword(w))
+            return nullptr;
+        w = stemWord(w);
         ISRWord* word = handler.OpenISRWord(w.c_str());
         string titleStr(string("@") + w);
         ISRWord* title = handler.OpenISRWord(titleStr.c_str());
@@ -172,7 +179,10 @@ ISR* QueryParser::wordC()
         {
         vector<ISR*> terms;
         //std::cout << "Gobbled up word in quote: " << tokenStream.CurrentTokenString() << std::endl;
-        string w = stemWord( tokenStream.CurrentTokenString() );
+        string w = standardize(tokenStream.CurrentTokenString());
+        if (StopWords::isStopword(w))
+            return nullptr;
+        w = stemWord(w);
         ISRWord* word = handler.OpenISRWord(w.c_str());
         string titleStr(string("@") + w);
         ISRWord* title = handler.OpenISRWord(titleStr.c_str());
@@ -190,7 +200,10 @@ ISR* QueryParser::wordC()
             }
         while (tokenStream.match(T_WORD))
             {
-            string w = stemWord(tokenStream.CurrentTokenString());
+            string w = standardize(tokenStream.CurrentTokenString());
+            if (StopWords::isStopword(w))
+                return nullptr;
+            w = stemWord(w);
             ISRWord* word = handler.OpenISRWord(w.c_str());
             string titleStr(string("@") + w);
             ISRWord* title = handler.OpenISRWord(titleStr.c_str());

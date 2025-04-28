@@ -1,5 +1,5 @@
 #pragma once
-#include "../utils/searchstring.h"
+#include <cf/searchstring.h>
 
 enum TokenType {
     T_INVALID = -1,
