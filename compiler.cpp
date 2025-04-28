@@ -87,15 +87,21 @@ ISR* QueryParser::BaseC()
     {
     if (tokenStream.match(T_WORD))
         {
-        string w =  tokenStream.CurrentTokenString();
-        w = standardize(w);
-        std::cout << "w: " << w.c_str() << std::endl;
-        if (StopWords::isStopword(w))
-            return nullptr;
-        w = stemWord(w);
-        ISRWord* word = handler.OpenISRWord(w.c_str());
-        string titleStr(string("@") + w);
-        ISRWord* title = handler.OpenISRWord(titleStr.c_str());
+         string w = stemWord(tokenStream.CurrentTokenString());
+         ISRWord* word = handler.OpenISRWord(w.c_str());
+         string titleStr(string("@") + w);
+         ISRWord* title = handler.OpenISRWord(titleStr.c_str());
+
+
+      //   string w =  tokenStream.CurrentTokenString();
+      //   w = standardize(w);
+      //   std::cout << "w: " << w.c_str() << std::endl;
+      //   if (StopWords::isStopword(w))
+      //       return nullptr;
+      //   w = stemWord(w);
+      //   ISRWord* word = handler.OpenISRWord(w.c_str());
+      //   string titleStr(string("@") + w);
+      //   ISRWord* title = handler.OpenISRWord(titleStr.c_str());
 
         if (word != nullptr) {
             // Only store basic ISRWord, not composite structures
@@ -179,13 +185,17 @@ ISR* QueryParser::wordC()
         {
         vector<ISR*> terms;
         //std::cout << "Gobbled up word in quote: " << tokenStream.CurrentTokenString() << std::endl;
-        string w = standardize(tokenStream.CurrentTokenString());
-        if (StopWords::isStopword(w))
-            return nullptr;
-        w = stemWord(w);
-        ISRWord* word = handler.OpenISRWord(w.c_str());
-        string titleStr(string("@") + w);
-        ISRWord* title = handler.OpenISRWord(titleStr.c_str());
+      //   string w = standardize(tokenStream.CurrentTokenString());
+      //   if (StopWords::isStopword(w))
+      //       return nullptr;
+      //   w = stemWord(w);
+      //   ISRWord* word = handler.OpenISRWord(w.c_str());
+      //   string titleStr(string("@") + w);
+      //   ISRWord* title = handler.OpenISRWord(titleStr.c_str());
+         string w = stemWord( tokenStream.CurrentTokenString() );
+         ISRWord* word = handler.OpenISRWord(w.c_str());
+         string titleStr(string("@") + w);
+         ISRWord* title = handler.OpenISRWord(titleStr.c_str());
         if (word != nullptr)
             {
             flattenedWords.push_back(word);
