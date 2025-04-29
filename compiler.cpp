@@ -212,10 +212,10 @@ ISR* QueryParser::wordC()
             }
         while (tokenStream.match(T_WORD))
             {
-            string w = standardize(tokenStream.CurrentTokenString());
-            if (StopWords::isStopword(w))
-                return nullptr;
-            w = stemWord(w);
+            // string w = standardize(tokenStream.CurrentTokenString());
+            // if (StopWords::isStopword(w))
+            //     return nullptr;
+            w = stemWord(tokenStream.CurrentTokenString());
             ISRWord* word = handler.OpenISRWord(w.c_str());
             string titleStr(string("@") + w);
             ISRWord* title = handler.OpenISRWord(titleStr.c_str());
