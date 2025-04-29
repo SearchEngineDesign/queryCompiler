@@ -5,19 +5,8 @@
 int main() {
     // Set the query string directly for testing
 
-    string query = "i me myself";
-
+    string query = "\"wikipedia buddhism\"";
     // string test = "wiki";
-    std::cout << "string test" << std::endl;
-    string w;
-    w.push_back('a');
-    w.push_back('b');
-    w.push_back('c');
-    w.push_back('d');
-    w.push_back('e');
-    w.push_back('f');
-    w.push_back('g');
-    std::cout << w.c_str() << std::endl;
     // Construct QueryParser with the custom string class
     QueryParser parser(query, 'b');
     string path = "../log/chunks/31";
@@ -47,7 +36,6 @@ int main() {
         std::cout << "target: " << target << "\n";
     }
 
-    ISRHandler isrHandler;
-    isrHandler.CloseISR(isr);
+    delete isr;
     return 0;
 } 

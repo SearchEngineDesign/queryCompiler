@@ -170,8 +170,6 @@ ISR* QueryParser::QuoteC()
         {
         //std::cout << "Gobbled up quote" << std::endl;
         ISR* constraint = wordC();
-        if (constraint == nullptr)
-            throw std::runtime_error("Error: Expected constraint after quote");
         if (tokenStream.match(T_QUOTE))
             return constraint;
         else
@@ -234,6 +232,8 @@ ISR* QueryParser::wordC()
                     terms.push_back(title);
                 }
             }
+        if (terms.size() == 0)
+            return nullptr;
         if (terms.size() == 1)
             return terms[0];
         else
